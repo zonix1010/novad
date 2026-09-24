@@ -1,4 +1,3 @@
-Index · HTML
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -37,7 +36,7 @@ Index · HTML
   h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;line-height:1.04;letter-spacing:-.01em}
   a{color:inherit}
   .serif{font-family:'Fraunces',Georgia,serif}
- 
+
   /* ---------- NAV ---------- */
   nav{position:sticky;top:0;z-index:50;background:rgba(247,243,236,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .nav-in{display:flex;align-items:center;justify-content:space-between;height:66px}
@@ -46,7 +45,7 @@ Index · HTML
   .nav-cta{font-family:'Inter';font-weight:600;font-size:14px;background:var(--ink);color:var(--paper);
     padding:11px 18px;border-radius:2px;text-decoration:none;transition:background .18s}
   .nav-cta:hover{background:var(--accent)}
- 
+
   /* ---------- HERO ---------- */
   .hero{padding:88px 0 64px;position:relative;overflow:hidden}
   .kicker{font-size:14px;color:var(--accent);font-weight:600;margin-bottom:26px;display:flex;align-items:center;gap:10px}
@@ -61,7 +60,7 @@ Index · HTML
   .btn-primary:hover{transform:translateY(-2px)}
   .btn-ghost{color:var(--ink);font-size:15px;text-decoration:underline;text-underline-offset:5px;text-decoration-color:var(--line)}
   .hero-note{margin-top:20px;font-size:14px;color:var(--muted)}
- 
+
   /* ---------- BANDEAU CHIFFRE ---------- */
   .figband{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--paper-2);margin-top:70px}
   .figband-in{display:grid;grid-template-columns:1.3fr 1fr;gap:0}
@@ -71,13 +70,13 @@ Index · HTML
   .figband .side{padding:52px 0 52px 48px;display:flex;flex-direction:column;justify-content:center;gap:22px}
   .figband .side .stat b{font-family:'Fraunces',serif;font-size:34px;font-weight:600;display:block;line-height:1}
   .figband .side .stat span{font-size:14.5px;color:var(--muted)}
- 
+
   /* ---------- SECTION SHELL ---------- */
   section{padding:96px 0}
   .eyebrow{font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--accent-2);margin-bottom:14px}
   .sec-h{font-size:clamp(32px,4.6vw,52px);max-width:20ch;margin-bottom:22px}
   .sec-lede{font-size:19px;color:var(--muted);max-width:58ch}
- 
+
   /* ---------- PROBLEME / TENSION ---------- */
   .split{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:52px}
   .split > div{padding:44px}
@@ -92,7 +91,7 @@ Index · HTML
   .split .left li::before{content:"✕";position:absolute;left:0;color:#b6533a;font-weight:700}
   .split .right li::before{content:"→";position:absolute;left:0;color:var(--accent-2);font-weight:700}
   .split .right li{color:#e5dfd4}
- 
+
   /* ---------- FINANCEMENT ---------- */
   .fin{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;margin-top:20px}
@@ -110,7 +109,7 @@ Index · HTML
   .fin-copy h3{font-size:27px;margin-bottom:16px}
   .fin-copy p{color:var(--muted);font-size:16px;margin-bottom:16px}
   .fin-copy .warn{font-size:13.5px;color:var(--muted);border-left:2px solid var(--accent-2);padding-left:14px;font-style:italic}
- 
+
   /* ---------- COMMENT CA MARCHE ---------- */
   .steps{counter-reset:s;display:flex;flex-direction:column;gap:0;margin-top:48px;border-top:1px solid var(--line)}
   .step{counter-increment:s;display:grid;grid-template-columns:80px 1fr;gap:28px;padding:34px 0;border-bottom:1px solid var(--line);align-items:baseline}
@@ -118,7 +117,7 @@ Index · HTML
   .step .n::before{content:counter(s,decimal-leading-zero)}
   .step h3{font-size:24px;margin-bottom:8px}
   .step p{color:var(--muted);font-size:16px;max-width:58ch}
- 
+
   /* ---------- FORMATION ---------- */
   .learn{background:var(--ink);color:var(--paper)}
   .learn .eyebrow{color:var(--accent-2)}
@@ -128,7 +127,7 @@ Index · HTML
   .learn-cell{background:#191712;padding:34px}
   .learn-cell h3{font-size:20px;margin-bottom:10px}
   .learn-cell p{color:#b0a99d;font-size:15px}
- 
+
   /* ---------- FORM ---------- */
   .join{background:var(--accent);color:#fff;position:relative}
   .join .eyebrow{color:#e3b58e}
@@ -153,7 +152,7 @@ Index · HTML
   .ok .tick{font-family:'Fraunces',serif;font-size:52px;color:var(--accent);line-height:1}
   .ok h3{font-size:24px;margin:14px 0 8px}
   .ok p{color:var(--muted);font-size:15px}
- 
+
   /* ---------- FOOTER ---------- */
   footer{padding:44px 0;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
   .foot-in{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:center}
@@ -177,7 +176,7 @@ Index · HTML
   .legal-list li{font-size:15px;color:var(--muted);padding-left:18px;position:relative}
   .legal-list li::before{content:"–";position:absolute;left:0;color:var(--accent)}
   .legal-note{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;font-style:italic;color:var(--muted)}
- 
+
   /* ---------- PRICING ---------- */
   .price-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px}
   .toggle{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:3px;padding:4px}
@@ -219,12 +218,12 @@ Index · HTML
   .price-foot .pf-t b{font-family:'Fraunces',serif;font-size:21px;display:block;margin-bottom:4px}
   .price-foot .pf-t span{font-size:14.5px;color:var(--muted);max-width:52ch;display:block}
   .price-foot .pf-tag{font-family:'Inter';font-weight:600;font-size:13px;color:var(--accent);white-space:nowrap}
- 
+
   /* ---------- ERREURS FORM ---------- */
   .err{font-size:12.5px;color:#b6533a;margin-top:5px;min-height:1px}
   input.bad,select.bad{border-color:#b6533a;outline-color:#b6533a}
   #joinForm .field{margin-bottom:16px}
- 
+
   /* ---------- MODALE (écran A + paiement) ---------- */
   .modal{position:fixed;inset:0;z-index:200;background:rgba(20,18,16,.62);backdrop-filter:blur(6px);
     display:none;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto}
@@ -244,7 +243,7 @@ Index · HTML
   .modal-box.small .tick{font-family:'Fraunces',serif;font-size:56px;color:var(--accent);line-height:1}
   .modal-box.small h3{font-size:28px;margin-top:10px}
   .plan .pcta{cursor:pointer;font-family:'Inter';border:none;width:100%}
- 
+
   /* ---------- ESPACE MEMBRE (écran B) ---------- */
   .member{position:fixed;inset:0;z-index:150;background:var(--paper);display:none;overflow-y:auto}
   .member.open{display:block}
@@ -286,7 +285,7 @@ Index · HTML
   .tcard h4{font-family:'Fraunces',serif;font-size:17px;font-weight:600;flex:1}
   .tcard .dlock{width:auto;padding:9px 16px}
   .unlocked .dlock,.unlocked .m-banner{display:none!important}
- 
+
   /* ---------- ASSESSMENT ---------- */
   .assess{position:fixed;inset:0;z-index:200;background:rgba(20,18,16,.72);backdrop-filter:blur(8px);
     display:none;align-items:flex-start;justify-content:center;padding:34px 20px;overflow-y:auto}
@@ -343,7 +342,7 @@ Index · HTML
   .send-status{font-size:13.5px;margin:4px 0 10px;min-height:18px}
   .send-status.ok{color:var(--accent);font-weight:600}
   .send-status.bad{color:#b6533a;font-weight:600}
- 
+
   @media (max-width:860px){
     .figband-in,.split,.fin-grid,.learn-grid,.join-in,.frow,.plans,.m-profile,.m-cards{grid-template-columns:1fr}
     .astep{padding:30px 24px}.assess-head{padding:16px 20px}
@@ -360,14 +359,14 @@ Index · HTML
 </style>
 </head>
 <body>
- 
+
 <nav>
   <div class="wrap nav-in">
     <div class="brand">Novad</div>
     <a href="#club" class="nav-cta">Rejoindre le club</a>
   </div>
 </nav>
- 
+
 <!-- HERO -->
 <header class="hero">
   <div class="wrap">
@@ -380,7 +379,7 @@ Index · HTML
     </div>
     <p class="hero-note">Inscription gratuite · Vous recevez les deals avant qu'ils soient publiés · Aucun engagement</p>
   </div>
- 
+
   <div class="figband">
     <div class="wrap figband-in">
       <div class="big">
@@ -394,14 +393,14 @@ Index · HTML
     </div>
   </div>
 </header>
- 
+
 <!-- TENSION -->
 <section>
   <div class="wrap">
     <div class="eyebrow">Le vrai obstacle</div>
     <h2 class="sec-h">Le problème n'a jamais été de trouver une entreprise. C'est de pouvoir l'acheter.</h2>
     <p class="sec-lede">La plupart des gens capables de diriger une PME ne franchissent jamais le pas — persuadés qu'il faut un million en banque. C'est faux. Ce qu'il faut, c'est le bon montage et la bonne entreprise. Les deux, ça s'apprend.</p>
- 
+
     <div class="split">
       <div class="left">
         <h3>Ce qu'on vous a fait croire</h3>
@@ -426,7 +425,7 @@ Index · HTML
     </div>
   </div>
 </section>
- 
+
 <!-- FINANCEMENT -->
 <section class="fin">
   <div class="wrap">
@@ -450,7 +449,7 @@ Index · HTML
     </div>
   </div>
 </section>
- 
+
 <!-- COMMENT -->
 <section id="comment">
   <div class="wrap">
@@ -464,7 +463,7 @@ Index · HTML
     </div>
   </div>
 </section>
- 
+
 <!-- FORMATION -->
 <section class="learn">
   <div class="wrap">
@@ -479,7 +478,7 @@ Index · HTML
     </div>
   </div>
 </section>
- 
+
 <!-- WAITLIST (friction zéro) -->
 <section class="join" id="club">
   <div class="wrap join-in">
@@ -493,7 +492,7 @@ Index · HTML
         <div>Gratuit pour rejoindre la liste, sans engagement</div>
       </div>
     </div>
- 
+
     <form id="joinForm" novalidate>
       <div class="field"><label for="prenom">Prénom</label><input id="prenom" name="prenom" type="text" autocomplete="given-name"><div class="err" id="e-prenom"></div></div>
       <div class="field"><label for="nom">Nom</label><input id="nom" name="nom" type="text" autocomplete="family-name"><div class="err" id="e-nom"></div></div>
@@ -504,7 +503,7 @@ Index · HTML
     </form>
   </div>
 </section>
- 
+
 <footer>
   <div class="wrap">
     <div class="foot-in">
@@ -519,7 +518,7 @@ Index · HTML
     <p class="disclaimer">Les chiffres présentés sont des ordres de grandeur issus d'estimations publiques sur la transmission des PME suisses et sont donnés à titre indicatif. Les structures de financement décrites illustrent des montages courants et ne constituent pas un conseil en investissement, juridique, fiscal ou en financement. Toute reprise dépend de la situation propre à chaque entreprise et à chaque repreneur.</p>
   </div>
 </footer>
- 
+
 <!-- PAGES LÉGALES -->
 <div class="legal" id="legalMentions" aria-hidden="true">
   <div class="legal-box">
@@ -544,7 +543,7 @@ Index · HTML
     <p class="legal-note">Document type fourni à titre de base. À faire vérifier par un·e juriste avant mise en production.</p>
   </div>
 </div>
- 
+
 <div class="legal" id="legalCgu" aria-hidden="true">
   <div class="legal-box">
     <button class="legal-x" onclick="closeLegal('legalCgu')" aria-label="Fermer">✕</button>
@@ -567,7 +566,7 @@ Index · HTML
     <p class="legal-note">Document type fourni à titre de base. À faire vérifier par un·e juriste avant mise en production.</p>
   </div>
 </div>
- 
+
 <div class="legal" id="legalPrivacy" aria-hidden="true">
   <div class="legal-box">
     <button class="legal-x" onclick="closeLegal('legalPrivacy')" aria-label="Fermer">✕</button>
@@ -595,7 +594,7 @@ Index · HTML
     <p class="legal-note">Document type fourni à titre de base. À faire vérifier par un·e juriste avant mise en production, en particulier au regard de la nLPD et du RGPD.</p>
   </div>
 </div>
- 
+
 <!-- ASSESSMENT (multi-étapes, post-inscription) -->
 <div class="assess" id="assess" aria-hidden="true">
   <div class="assess-box">
@@ -604,7 +603,7 @@ Index · HTML
       <div class="assess-prog"><div class="assess-bar" id="aBar"></div></div>
       <div class="assess-count" id="aCount">Étape 1 / 6</div>
     </div>
- 
+
     <!-- Intro -->
     <div class="astep active" data-step="0">
       <div class="tick">✓</div>
@@ -617,7 +616,7 @@ Index · HTML
       <button class="pcta solid" onclick="aNext()">Répondre — 90 secondes →</button>
       <button class="pcta text" onclick="closeAssess()">Plus tard</button>
     </div>
- 
+
     <!-- Q1 horizon -->
     <div class="astep" data-step="1">
       <h3>Où en êtes-vous dans votre projet de reprise ?</h3>
@@ -628,7 +627,7 @@ Index · HTML
         <button class="opt" onclick="pick(this)">Je suis surtout curieux / en veille</button>
       </div>
     </div>
- 
+
     <!-- Q2 apport -->
     <div class="astep" data-step="2">
       <h3>Quel apport pourriez-vous mobiliser aujourd'hui ?</h3>
@@ -641,7 +640,7 @@ Index · HTML
         <button class="opt" onclick="pick(this)">Plus de 750'000 CHF</button>
       </div>
     </div>
- 
+
     <!-- Q3 secteurs (multi) -->
     <div class="astep" data-step="3">
       <h3>Quels types d'entreprises vous attirent ?</h3>
@@ -658,7 +657,7 @@ Index · HTML
       </div>
       <button class="pcta solid" onclick="aNext()">Continuer →</button>
     </div>
- 
+
     <!-- Q4 région + expérience -->
     <div class="astep" data-step="4">
       <h3>Deux dernières précisions.</h3>
@@ -684,7 +683,7 @@ Index · HTML
       </div>
       <button class="pcta solid" onclick="aNext()">Continuer →</button>
     </div>
- 
+
     <!-- Q5 attentes (open + multi) -->
     <div class="astep" data-step="5">
       <h3>Qu'attendez-vous surtout du club ?</h3>
@@ -703,14 +702,14 @@ Index · HTML
       </div>
       <button class="pcta solid" onclick="aFinish()">Terminer →</button>
     </div>
- 
+
     <!-- Done -->
     <div class="astep" data-step="6">
       <div class="tick">✓</div>
       <h3 id="aDone">Merci, votre profil est complet.</h3>
       <p class="astep-lede">On vous écrit dès l'ouverture du club — et vous serez parmi les premiers à recevoir un dossier qui correspond à ce que vous cherchez.</p>
       <div id="sendStatus" class="send-status"></div>
- 
+
       <div class="share">
         <div class="share-lede">Vous connaissez quelqu'un qui rêve de reprendre une entreprise ? Faites-lui découvrir le club.</div>
         <div class="share-link">
@@ -723,20 +722,20 @@ Index · HTML
           <a class="sbtn em" id="shEm">Email</a>
         </div>
       </div>
- 
+
       <button class="pcta text" onclick="closeAssess()">Fermer</button>
     </div>
   </div>
 </div>
- 
- 
+
+
 <script>
   // ---------- validation inscription ----------
   var DISPOSABLE=['yopmail','mailinator','guerrillamail','guerrilla','10minutemail','tempmail','temp-mail','trashmail','sharklasers','getnada','maildrop','fakeinbox','throwaway','discard','jetable'];
   var TYPO={'gmial.com':'gmail.com','gmai.com':'gmail.com','gmail.co':'gmail.com','hotmial.com':'hotmail.com','hotmai.com':'hotmail.com','outlok.com':'outlook.com','yaho.com':'yahoo.com'};
   function setErr(id,msg){document.getElementById(id).textContent=msg||'';document.getElementById(id.replace('e-','')).classList.toggle('bad',!!msg);}
   function validName(v){return v.trim().length>=2 && !/\d/.test(v) && /[a-zA-Zà-ÿ]/.test(v);}
- 
+
   var profile={};
   function validateAndJoin(e){
     e.preventDefault();
@@ -751,7 +750,7 @@ Index · HTML
       if(TYPO[dom]){setErr('e-email','Vouliez-vous dire @'+TYPO[dom]+' ?');ok=false;}
       else if(DISPOSABLE.some(function(d){return dom.indexOf(d)!==-1;})){setErr('e-email','Utilisez une adresse email permanente.');ok=false;}
       else setErr('e-email','');}
- 
+
     var t=document.getElementById('tel'), tel=t.value.trim();
     var digits=tel.replace(/[^0-9]/g,'');
     if(digits.length<9){setErr('e-tel','Numéro de téléphone invalide.');ok=false;}else setErr('e-tel','');
@@ -763,7 +762,7 @@ Index · HTML
     setupShare();
     openAssess();
   }
- 
+
   // ---------- assessment multi-étapes ----------
   var STEPS=7; // 0 intro .. 6 done
   var cur=0;
@@ -801,7 +800,6 @@ Index · HTML
     profile.attentes=Array.prototype.slice.call(document.querySelectorAll('[data-key=attentes] .opt.sel')).map(function(o){return o.textContent.trim();});
     profile.message=document.getElementById('qOpen').value.trim();
     profile.statut='Complété';
-    sentOK=false;
     showStep(6);
     var el=document.getElementById('sendStatus');
     if(el){el.textContent='Envoi en cours…';el.className='send-status';}
@@ -811,7 +809,7 @@ Index · HTML
       else{el.textContent='⚠ Échec : '+info;el.className='send-status bad';}
     });
   }
- 
+
   // ---------- partage ----------
   function shareLink(){ return window.location.href.split('#')[0]; }
   function setupShare(){
@@ -828,14 +826,13 @@ Index · HTML
     try{ navigator.clipboard.writeText(i.value); }catch(e){ document.execCommand('copy'); }
     b.textContent='Copié ✓'; setTimeout(function(){b.textContent='Copier';},1800);
   }
- 
+
   // ---------- envoi vers Supabase ----------
   var SB_URL='https://odqssmvlrgzpxvaulpze.supabase.co';
   var SB_KEY='sb_publishable_9R0DQElFUNEHErLDy173vQ_3r1akzbZ';
-  var sentOK=false;
-  function sendToSheet(cb){
-    if(sentOK){if(cb)cb(true);return;}
-    var row={
+  var leadId=null;
+  function rowFromProfile(){
+    return {
       statut:profile.statut||'', prenom:profile.prenom||'', nom:profile.nom||'',
       email:profile.email||'', tel:profile.tel||'', horizon:profile.horizon||'',
       apport:profile.apport||'',
@@ -843,21 +840,35 @@ Index · HTML
       region:profile.region||'', situation:profile.situation||'',
       attentes:(profile.attentes||[]).join(', '), message:profile.message||''
     };
-    fetch(SB_URL+'/rest/v1/leads',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
-      body:JSON.stringify(row)
-    })
-    .then(function(r){ if(r.ok){sentOK=true; if(cb)cb(true);} else { r.text().then(function(t){ if(cb)cb(false,'HTTP '+r.status+' '+t); }); } })
-    .catch(function(err){ if(cb)cb(false,String(err)); });
   }
- 
+  function sendToSheet(cb){
+    var row=rowFromProfile();
+    if(leadId){
+      // mise à jour de la ligne existante (passage Inscrit -> Complété)
+      fetch(SB_URL+'/rest/v1/leads?id=eq.'+leadId,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+        body:JSON.stringify(row)
+      })
+      .then(function(r){ if(r.ok){if(cb)cb(true);} else { r.text().then(function(t){ if(cb)cb(false,'HTTP '+r.status+' '+t); }); } })
+      .catch(function(err){ if(cb)cb(false,String(err)); });
+    } else {
+      // première création (Inscrit), on récupère l'id pour la mise à jour ultérieure
+      fetch(SB_URL+'/rest/v1/leads',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'},
+        body:JSON.stringify(row)
+      })
+      .then(function(r){ if(r.ok){ r.json().then(function(d){ if(d&&d[0])leadId=d[0].id; if(cb)cb(true); }); } else { r.text().then(function(t){ if(cb)cb(false,'HTTP '+r.status+' '+t); }); } })
+      .catch(function(err){ if(cb)cb(false,String(err)); });
+    }
+  }
+
   // ---------- pages légales ----------
   function openLegal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
   function closeLegal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
- 
+
   document.getElementById('joinForm').addEventListener('submit',validateAndJoin);
 </script>
 </body>
 </html>
- 
