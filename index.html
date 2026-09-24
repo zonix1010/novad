@@ -292,7 +292,6 @@
   .assess.open{display:flex}
   .assess-box{background:var(--paper);max-width:600px;width:100%;border-radius:10px;padding:0 0 8px;position:relative;
     box-shadow:0 40px 100px rgba(0,0,0,.45);animation:pop .32s cubic-bezier(.2,.9,.3,1.1);overflow:hidden}
-  @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
   .assess-head{display:flex;align-items:center;gap:16px;padding:20px 30px;border-bottom:1px solid var(--line);background:var(--card)}
   .assess-head .brand{font-size:18px}.assess-head .brand span{color:var(--accent)}
   .assess-prog{flex:1;height:5px;background:var(--paper-2);border-radius:3px;overflow:hidden}
@@ -757,21 +756,19 @@
     if(!ok)return;
     profile.prenom=p.value.trim();profile.nom=n.value.trim();profile.email=email;profile.tel=tel;
     profile.statut='Inscrit';
-    sendToSheet(); // capture immédiate du contact (même s'il abandonne l'assessment)
+    saveLead(); // capture immédiate du contact (même s'il abandonne l'assessment)
     document.getElementById('aWelcome').textContent='Vous êtes sur la liste, '+profile.prenom+'.';
     setupShare();
     openAssess();
   }
 
   // ---------- assessment multi-étapes ----------
-  var STEPS=7; // 0 intro .. 6 done
   var cur=0;
   function openAssess(){document.getElementById('assess').classList.add('open');document.body.style.overflow='hidden';showStep(0);}
   function closeAssess(){document.getElementById('assess').classList.remove('open');document.body.style.overflow='';}
   function showStep(i){
     cur=i;
     document.querySelectorAll('.astep').forEach(function(s){s.classList.toggle('active',+s.dataset.step===i);});
-    var q=Math.min(i,6);
     document.getElementById('aCount').textContent = (i===0)?'Bienvenue' : (i===6?'Terminé':'Étape '+i+' / 5');
     document.getElementById('aBar').style.width=Math.round((i/6)*100)+'%';
     document.querySelector('.astep.active').scrollTop=0;
@@ -803,10 +800,10 @@
     showStep(6);
     var el=document.getElementById('sendStatus');
     if(el){el.textContent='Envoi en cours…';el.className='send-status';}
-    sendToSheet(function(ok,info){
+    saveLead(function(ok,info){
       if(!el)return;
       if(ok){el.textContent='✓ Enregistré';el.className='send-status ok';}
-      else{el.textContent='⚠ Échec : '+info;el.className='send-status bad';}
+      else{console.error('save_lead',info);el.innerHTML='⚠ Enregistrement impossible. <a href="#" onclick="aFinish();return false;">Réessayer</a>';el.className='send-status bad';}
     });
   }
 
@@ -828,9 +825,17 @@
   }
 
   // ---------- envoi vers Supabase ----------
+  // Le navigateur n'a le droit que d'appeler la fonction save_lead : pas de lecture ni de modification directe de la table.
+  // Chaque visiteur reçoit un jeton aléatoire ; seul ce jeton permet de compléter sa propre ligne.
   var SB_URL='https://odqssmvlrgzpxvaulpze.supabase.co';
   var SB_KEY='sb_publishable_9R0DQElFUNEHErLDy173vQ_3r1akzbZ';
-  var leadId=null;
+  function newToken(){
+    if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+    var b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;
+    var h=Array.prototype.map.call(b,function(x){return(x+256).toString(16).slice(1);}).join('');
+    return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+  }
+  var leadToken=newToken();
   function rowFromProfile(){
     return {
       statut:profile.statut||'', prenom:profile.prenom||'', nom:profile.nom||'',
@@ -841,27 +846,15 @@
       attentes:(profile.attentes||[]).join(', '), message:profile.message||''
     };
   }
-  function sendToSheet(cb){
-    var row=rowFromProfile();
-    if(leadId){
-      // mise à jour de la ligne existante (passage Inscrit -> Complété)
-      fetch(SB_URL+'/rest/v1/leads?id=eq.'+leadId,{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
-        body:JSON.stringify(row)
-      })
-      .then(function(r){ if(r.ok){if(cb)cb(true);} else { r.text().then(function(t){ if(cb)cb(false,'HTTP '+r.status+' '+t); }); } })
-      .catch(function(err){ if(cb)cb(false,String(err)); });
-    } else {
-      // première création (Inscrit), on récupère l'id pour la mise à jour ultérieure
-      fetch(SB_URL+'/rest/v1/leads',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'},
-        body:JSON.stringify(row)
-      })
-      .then(function(r){ if(r.ok){ r.json().then(function(d){ if(d&&d[0])leadId=d[0].id; if(cb)cb(true); }); } else { r.text().then(function(t){ if(cb)cb(false,'HTTP '+r.status+' '+t); }); } })
-      .catch(function(err){ if(cb)cb(false,String(err)); });
-    }
+  function saveLead(cb){
+    // crée la ligne au 1er appel (Inscrit), la complète ensuite (Complété) — même jeton
+    fetch(SB_URL+'/rest/v1/rpc/save_lead',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+      body:JSON.stringify({p_token:leadToken,p:rowFromProfile()})
+    })
+    .then(function(r){ if(r.ok){if(cb)cb(true);} else { r.text().then(function(t){ if(cb)cb(false,'HTTP '+r.status+' '+t); }); } })
+    .catch(function(err){ if(cb)cb(false,String(err)); });
   }
 
   // ---------- pages légales ----------

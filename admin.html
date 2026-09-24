@@ -198,7 +198,8 @@
       COLS.forEach(function(c){
         var v=l[c.k]||'';
         if(c.k==='created_at')v=fmtDate(v);
-        if(c.k==='statut'){var cl=(v==='Complété')?'c':'i';v='<span class="badge '+cl+'">'+v+'</span>';}
+        v=esc(v); // les champs viennent du formulaire public : jamais injectés tels quels
+        if(c.k==='statut'){var cl=(l.statut==='Complété')?'c':'i';v='<span class="badge '+cl+'">'+v+'</span>';}
         body+='<td class="'+(c.k==='message'?'msg':'')+'">'+v+'</td>';
       });
       body+='</tr>';
@@ -207,6 +208,7 @@
     document.getElementById('empty').style.display=rows.length?'none':'block';
     document.getElementById('count').textContent=rows.length+' ligne(s) affichée(s)';
   }
+  function esc(v){return String(v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function stat(n,l){return '<div class="stat"><b>'+n+'</b><span>'+l+'</span></div>';}
   function setSort(k){ if(sortKey===k)sortAsc=!sortAsc; else{sortKey=k;sortAsc=true;} render(); }
 
@@ -216,7 +218,8 @@
     var lines=rows.map(function(l){
       return COLS.map(function(c){
         var v=(c.k==='created_at')?fmtDate(l[c.k]):(l[c.k]||'');
-        v=String(v).replace(/"/g,'""');
+        v=String(v); if(/^([=@\t\r]|[+\-][^\d\s])/.test(v))v="'"+v; // bloque les formules Excel
+        v=v.replace(/"/g,'""');
         return '"'+v+'"';
       }).join(';');
     });
