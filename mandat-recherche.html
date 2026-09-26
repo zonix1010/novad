@@ -224,9 +224,9 @@
     <h2 class="sec-h">Une rémunération alignée sur votre résultat</h2>
     <div class="fee solo">
       <ul>
-        <li>Cadrage du mandat et accord de confidentialité : [À DÉFINIR]</li>
-        <li>Honoraire mensuel de recherche, déduit de l'honoraire de succès : [À DÉFINIR]</li>
-        <li>Honoraire de succès à la signature : [À DÉFINIR, % du prix ou montant minimum]</li>
+        <li>Premier échange : sans engagement</li>
+        <li>Cadrage du mandat et recherche des cibles : à négocier</li>
+                <li>Honoraire de succès, dû uniquement si l'acquisition est signée : à négocier</li>
       </ul>
     </div>
     <p class="fee-note">Chaque mandat fait l'objet d'une lettre de mission écrite, qui précise le périmètre, la durée et les honoraires.</p>
@@ -313,6 +313,7 @@
       if(!r.ok) return r.text().then(function(t){throw new Error(t);});
       form.querySelector('.fields').style.display='none';
       form.querySelector('.done').classList.add('show');
+      form.querySelector('.done').scrollIntoView({behavior:'smooth',block:'center'});
     }).catch(function(err){
       console.error('save_demande',err);
       status.textContent='Envoi impossible pour le moment. Réessayez dans un instant.';status.className='status bad';

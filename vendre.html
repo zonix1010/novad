@@ -374,6 +374,7 @@
       if(!r.ok) return r.text().then(function(t){throw new Error(t);});
       form.querySelector('.fields').style.display='none';
       form.querySelector('.done').classList.add('show');
+      form.querySelector('.done').scrollIntoView({behavior:'smooth',block:'center'});
     }).catch(function(err){
       console.error('save_demande',err);
       status.textContent='Envoi impossible pour le moment. Réessayez dans un instant.';status.className='status bad';

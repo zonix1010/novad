@@ -772,7 +772,7 @@
     document.querySelectorAll('.astep').forEach(function(s){s.classList.toggle('active',+s.dataset.step===i);});
     document.getElementById('aCount').textContent = (i===0)?'Bienvenue' : (i===6?'Terminé':'Étape '+i+' / 5');
     document.getElementById('aBar').style.width=Math.round((i/6)*100)+'%';
-    document.querySelector('.astep.active').scrollTop=0;
+    document.getElementById('assess').scrollTop=0; // chaque étape (et le remerciement) s'affiche en haut
   }
   function aNext(){
     // valide l'étape 4 (selects) si on y est
