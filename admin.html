@@ -55,6 +55,10 @@
   .badge.i{background:var(--paper2);color:var(--muted)}
   .empty{padding:50px;text-align:center;color:var(--muted)}
   .count{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .vtabs{display:inline-flex;background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:3px}
+  .vtabs button{font-family:'Inter';font-weight:600;font-size:13.5px;border:none;background:none;color:var(--muted);padding:8px 14px;border-radius:4px;cursor:pointer}
+  .vtabs button.on{background:var(--ink);color:var(--paper)}
+  .badge.a{background:rgba(197,106,46,.14);color:var(--accent2)}
 </style>
 </head>
 <body>
@@ -77,14 +81,18 @@
 <div class="app" id="appView">
   <header>
     <div class="brand">Novad <span>·</span> Admin</div>
+    <div class="vtabs">
+      <button id="vt-leads" class="on" onclick="showView('leads')">Repreneurs</button>
+      <button id="vt-dem" onclick="showView('dem')">Entreprises</button>
+    </div>
     <div class="hactions">
-      <button class="btn" onclick="loadLeads()">↻ Rafraîchir</button>
-      <button class="btn solid" onclick="exportCSV()">Exporter CSV</button>
+      <button class="btn" onclick="refresh()">↻ Rafraîchir</button>
+      <button class="btn solid" onclick="VIEW==='dem'?exportDemCSV():exportCSV()">Exporter CSV</button>
       <button class="btn" onclick="logout()">Déconnexion</button>
     </div>
   </header>
 
-  <div class="wrap">
+  <div class="wrap" id="viewLeads">
     <div class="stats" id="stats"></div>
 
     <div class="filters">
@@ -102,6 +110,22 @@
         <tbody id="body"></tbody>
       </table>
       <div class="empty" id="empty" style="display:none">Aucun lead pour ces critères.</div>
+    </div>
+  </div>
+
+  <div class="wrap" id="viewDem" style="display:none">
+    <div class="stats" id="dStats"></div>
+    <div class="filters">
+      <input id="dSearch" placeholder="Rechercher (nom, email, entreprise, secteur…)" oninput="renderDem()">
+      <select id="dType" onchange="renderDem()"><option value="">Cessions et acquisitions</option><option value="cession">Cessions</option><option value="acquisition">Mandats d'acquisition</option></select>
+    </div>
+    <div class="count" id="dCount"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr id="dHead"></tr></thead>
+        <tbody id="dBody"></tbody>
+      </table>
+      <div class="empty" id="dEmpty" style="display:none">Aucune demande pour ces critères.</div>
     </div>
   </div>
 </div>
@@ -227,6 +251,64 @@
     var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download='novad-leads-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  }
+
+  // ---------- vue Entreprises (table demandes) ----------
+  var VIEW='leads', DEMS=[];
+  var DCOLS=[
+    {k:'created_at',label:'Date'},{k:'type',label:'Type'},{k:'prenom',label:'Prénom'},{k:'nom',label:'Nom'},
+    {k:'email',label:'Email'},{k:'tel',label:'Téléphone'},{k:'societe',label:'Entreprise'},{k:'fonction',label:'Fonction'},
+    {k:'secteur',label:'Secteur'},{k:'canton',label:'Canton'},{k:'zone',label:'Zone'},{k:'type_operation',label:'Opération'},
+    {k:'ca',label:'CA'},{k:'employes',label:'Collab.'},{k:'budget',label:'Budget'},{k:'nombre',label:'Nb cibles'},
+    {k:'horizon',label:'Horizon'},{k:'raison',label:'Raison'},{k:'message',label:'Message'}
+  ];
+  function showView(v){
+    VIEW=v;
+    document.getElementById('viewLeads').style.display=(v==='leads')?'':'none';
+    document.getElementById('viewDem').style.display=(v==='dem')?'':'none';
+    document.getElementById('vt-leads').classList.toggle('on',v==='leads');
+    document.getElementById('vt-dem').classList.toggle('on',v==='dem');
+    if(v==='dem' && !DEMS.length) loadDem();
+  }
+  function refresh(){ if(VIEW==='dem') loadDem(); else loadLeads(); }
+  function loadDem(){
+    sb.from('demandes').select('*').order('created_at',{ascending:false}).then(function(r){
+      if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
+      DEMS=r.data||[]; renderDem();
+    });
+  }
+  function demFiltered(){
+    var q=document.getElementById('dSearch').value.toLowerCase(), t=document.getElementById('dType').value;
+    return DEMS.filter(function(d){
+      if(t&&d.type!==t)return false;
+      if(q){var blob=['prenom','nom','email','tel','societe','secteur','zone','canton','message'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
+      return true;
+    });
+  }
+  function renderDem(){
+    var rows=demFiltered();
+    var ces=DEMS.filter(function(d){return d.type==='cession';}).length;
+    document.getElementById('dStats').innerHTML=stat(DEMS.length,'Demandes totales')+stat(ces,'Cessions')+stat(DEMS.length-ces,'Mandats d\'acquisition');
+    document.getElementById('dHead').innerHTML=DCOLS.map(function(c){return '<th>'+c.label+'</th>';}).join('');
+    document.getElementById('dBody').innerHTML=rows.map(function(d){
+      return '<tr>'+DCOLS.map(function(c){
+        var v=d[c.k]||''; if(c.k==='created_at')v=fmtDate(v); v=esc(v);
+        if(c.k==='type')v='<span class="badge '+(d.type==='cession'?'c':'a')+'">'+(d.type==='cession'?'Cession':'Acquisition')+'</span>';
+        return '<td class="'+(c.k==='message'?'msg':'')+'">'+v+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    document.getElementById('dEmpty').style.display=rows.length?'none':'block';
+    document.getElementById('dCount').textContent=rows.length+' demande(s) affichée(s)';
+  }
+  function exportDemCSV(){
+    var rows=demFiltered();
+    var lines=rows.map(function(d){return DCOLS.map(function(c){
+      var v=(c.k==='created_at')?fmtDate(d[c.k]):(d[c.k]||''); v=String(v);
+      if(/^([=@\t\r]|[+\-][^\d\s])/.test(v))v="'"+v;
+      return '"'+v.replace(/"/g,'""')+'"';}).join(';');});
+    var csv='\ufeff'+DCOLS.map(function(c){return c.label;}).join(';')+'\n'+lines.join('\n');
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download='novad-demandes-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   }
 
   document.getElementById('pass').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
