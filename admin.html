@@ -258,8 +258,8 @@
   var DCOLS=[
     {k:'created_at',label:'Date'},{k:'type',label:'Type'},{k:'prenom',label:'Prénom'},{k:'nom',label:'Nom'},
     {k:'email',label:'Email'},{k:'tel',label:'Téléphone'},{k:'societe',label:'Entreprise'},{k:'fonction',label:'Fonction'},
-    {k:'secteur',label:'Secteur'},{k:'canton',label:'Canton'},{k:'zone',label:'Zone'},{k:'type_operation',label:'Opération'},
-    {k:'ca',label:'CA'},{k:'employes',label:'Collab.'},{k:'budget',label:'Budget'},{k:'nombre',label:'Nb cibles'},
+    {k:'secteur',label:'Secteur'},{k:'canton',label:'Canton'},
+    {k:'ca',label:'CA'},{k:'employes',label:'Collab.'},
     {k:'horizon',label:'Horizon'},{k:'raison',label:'Raison'},{k:'message',label:'Message'}
   ];
   function showView(v){
@@ -281,7 +281,7 @@
     var q=document.getElementById('dSearch').value.toLowerCase(), t=document.getElementById('dType').value;
     return DEMS.filter(function(d){
       if(t&&d.type!==t)return false;
-      if(q){var blob=['prenom','nom','email','tel','societe','secteur','zone','canton','message'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
+      if(q){var blob=['prenom','nom','email','tel','societe','fonction','secteur','canton','message'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
       return true;
     });
   }
