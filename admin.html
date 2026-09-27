@@ -59,7 +59,18 @@
   .vtabs button{font-family:'Inter';font-weight:600;font-size:13.5px;border:none;background:none;color:var(--muted);padding:8px 14px;border-radius:4px;cursor:pointer}
   .vtabs button.on{background:var(--ink);color:var(--paper)}
   .badge.a{background:rgba(197,106,46,.14);color:var(--accent2)}
-  /* mandat Jacot */
+  /* mandats */
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;cursor:pointer;transition:all .15s}
+  .mcard:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(20,18,16,.06)}
+  .mcard h3{font-family:'Fraunces',serif;font-size:21px;font-weight:600;margin-bottom:3px}
+  .mcard .client{font-size:13px;color:var(--muted)}
+  .mcard .zone{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .mcard .mnums{display:flex;gap:16px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .mcard .mnums b{display:block;font-family:'Fraunces',serif;font-size:22px;color:var(--accent);line-height:1.1}
+  .mcard .mfoot{margin-top:12px;font-size:12px;color:var(--muted)}
+  .back{background:none;border:none;font-family:'Inter';font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;padding:0;margin-bottom:10px}
+  .back:hover{color:var(--accent)}
   .jbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
   .jbar h2{font-size:22px}
   .jbar p{font-size:13px;color:var(--muted);margin-top:2px}
@@ -113,11 +124,11 @@
     <div class="vtabs">
       <button id="vt-leads" class="on" onclick="showView('leads')">Repreneurs</button>
       <button id="vt-dem" onclick="showView('dem')">Entreprises</button>
-      <button id="vt-jacot" onclick="showView('jacot')">Mandat Jacot</button>
+      <button id="vt-mandats" onclick="showView('mandats')">Mandats</button>
     </div>
     <div class="hactions">
       <button class="btn" onclick="refresh()">↻ Rafraîchir</button>
-      <button class="btn solid" onclick="VIEW==='dem'?exportDemCSV():VIEW==='jacot'?exportJacotCSV():exportCSV()">Exporter CSV</button>
+      <button class="btn solid" onclick="VIEW==='dem'?exportDemCSV():VIEW==='mandats'?exportPipeCSV():exportCSV()">Exporter CSV</button>
       <button class="btn" onclick="logout()">Déconnexion</button>
     </div>
   </header>
@@ -159,24 +170,30 @@
     </div>
   </div>
 
-  <div class="wrap" id="viewJacot" style="display:none">
+  <div class="wrap" id="viewMandats" style="display:none">
+    <div class="jbar"><div><h2>Mandats en cours</h2><p>Choisissez un mandat pour ouvrir son pipeline.</p></div></div>
+    <div class="mgrid" id="mGrid"></div>
+  </div>
+
+  <div class="wrap" id="viewPipe" style="display:none">
+    <button class="back" onclick="backToMandats()">← Tous les mandats</button>
     <div class="jbar">
       <div>
-        <h2>Mandat Jacot — Groupe Haute Chocolaterie</h2>
-        <p>Pipeline confiseries / chocolateries / pâtisseries · Berne, Lausanne, Fribourg</p>
+        <h2 id="pTitle"></h2>
+        <p id="pSub"></p>
       </div>
       <div class="hactions">
-        <a class="btn" href="pipeline-jacot.html" target="_blank" rel="noopener">Vue client ↗</a>
-        <button class="btn go" onclick="openJacot(null)">+ Nouvelle entreprise</button>
+        <a class="btn" id="pClient" href="#" target="_blank" rel="noopener">Vue client ↗</a>
+        <button class="btn go" onclick="openFiche(null)">+ Nouvelle entreprise</button>
       </div>
     </div>
     <div class="stats" id="jStats"></div>
     <div class="filters">
-      <input id="jSearch" placeholder="Rechercher (entreprise, propriétaire, contact, notes…)" oninput="renderJacot()">
-      <select id="jVille" onchange="renderJacot()"><option value="">Toutes les villes</option><option>Berne</option><option>Lausanne</option><option>Fribourg</option><option>Autre</option></select>
-      <select id="jBranche" onchange="renderJacot()"><option value="">Toutes les branches</option><option>Confiserie</option><option>Chocolaterie</option><option>Pâtisserie</option><option>Boulangerie-pâtisserie</option></select>
-      <select id="jStatut" onchange="renderJacot()"><option value="">Tous statuts</option><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select>
-      <select id="jClasse" onchange="renderJacot()"><option value="">Toutes classes</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select>
+      <input id="jSearch" placeholder="Rechercher (entreprise, propriétaire, contact, notes…)" oninput="renderPipe()">
+      <select id="jVille" onchange="renderPipe()"><option value="">Toutes les villes</option></select>
+      <select id="jBranche" onchange="renderPipe()"><option value="">Toutes les branches</option></select>
+      <select id="jStatut" onchange="renderPipe()"><option value="">Tous statuts</option><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select>
+      <select id="jClasse" onchange="renderPipe()"><option value="">Toutes classes</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select>
     </div>
     <div class="count" id="jCount"></div>
     <div class="tablewrap">
@@ -189,7 +206,7 @@
   </div>
 </div>
 
-<!-- MODALE fiche entreprise (mandat Jacot) -->
+<!-- MODALE fiche entreprise (pipeline d'un mandat) -->
 <div class="overlay" id="jOverlay">
   <div class="modal">
     <h2 id="jTitle">Nouvelle entreprise</h2>
@@ -201,8 +218,8 @@
           <div><label>Propriétaire</label><input name="proprietaire"></div>
         </div>
         <div class="row3">
-          <div><label>Ville</label><select name="ville"><option value="">—</option><option>Berne</option><option>Lausanne</option><option>Fribourg</option><option>Autre</option></select></div>
-          <div><label>Branche</label><select name="branche"><option value="">—</option><option>Confiserie</option><option>Chocolaterie</option><option>Pâtisserie</option><option>Boulangerie-pâtisserie</option></select></div>
+          <div><label>Ville</label><select name="ville"><option value="">—</option></select></div>
+          <div><label>Branche</label><select name="branche"><option value="">—</option></select></div>
           <div><label>Points de vente / tea-room</label><input name="pdv"></div>
         </div>
         <label>Contact (email / tél.)</label><input name="contact">
@@ -244,10 +261,10 @@
         <label>Notes</label><textarea name="notes"></textarea>
       </fieldset>
       <div class="modalfoot">
-        <button class="btn danger" type="button" id="jDelete" style="display:none" onclick="deleteJacot()">Supprimer</button>
+        <button class="btn danger" type="button" id="jDelete" style="display:none" onclick="deleteFiche()">Supprimer</button>
         <div style="flex:1"></div>
-        <button class="btn" type="button" onclick="closeJacot()">Annuler</button>
-        <button class="btn go" type="button" id="jSave" onclick="saveJacot()">Enregistrer</button>
+        <button class="btn" type="button" onclick="closeFiche()">Annuler</button>
+        <button class="btn go" type="button" id="jSave" onclick="saveFiche()">Enregistrer</button>
       </div>
     </form>
   </div>
@@ -389,14 +406,15 @@
     VIEW=v;
     document.getElementById('viewLeads').style.display=(v==='leads')?'':'none';
     document.getElementById('viewDem').style.display=(v==='dem')?'':'none';
-    document.getElementById('viewJacot').style.display=(v==='jacot')?'':'none';
+    document.getElementById('viewMandats').style.display=(v==='mandats'&&!MANDAT)?'':'none';
+    document.getElementById('viewPipe').style.display=(v==='mandats'&&MANDAT)?'':'none';
     document.getElementById('vt-leads').classList.toggle('on',v==='leads');
     document.getElementById('vt-dem').classList.toggle('on',v==='dem');
-    document.getElementById('vt-jacot').classList.toggle('on',v==='jacot');
+    document.getElementById('vt-mandats').classList.toggle('on',v==='mandats');
     if(v==='dem' && !DEMS.length) loadDem();
-    if(v==='jacot' && !JROWS.length) loadJacot();
+    if(v==='mandats') MANDAT?loadPipe():loadMandats();
   }
-  function refresh(){ if(VIEW==='dem') loadDem(); else if(VIEW==='jacot') loadJacot(); else loadLeads(); }
+  function refresh(){ if(VIEW==='dem') loadDem(); else if(VIEW==='mandats') MANDAT?loadPipe():loadMandats(); else loadLeads(); }
   function loadDem(){
     sb.from('demandes').select('*').order('created_at',{ascending:false}).then(function(r){
       if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
@@ -437,8 +455,65 @@
     a.download='novad-demandes-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   }
 
-  // ---------- vue Mandat Jacot (table pipeline_entreprises) ----------
-  var MANDAT='jacot', JROWS=[], jCurrent=null, jSortKey='updated_at', jSortAsc=false;
+  // ---------- vue Mandats (table pipeline_entreprises, une ligne = une fiche, mandat_slug = le mandat) ----------
+  // Nouveau mandat : ajouter une entrée ici (slug = valeur de mandat_slug en base).
+  var MANDATS=[
+    {slug:'jacot', titre:'Jacot', client:'Groupe Haute Chocolaterie — Daniel Knoepfl',
+     zone:'Confiseries / chocolateries / pâtisseries · Berne, Lausanne (+ Fribourg)',
+     page:'pipeline-jacot.html', statut:'En cours',
+     villes:['Berne','Lausanne','Fribourg','Autre'],
+     branches:['Confiserie','Chocolaterie','Pâtisserie','Boulangerie-pâtisserie']}
+  ];
+  var MANDAT=null, MCFG=null, MSTATS=[];
+
+  function loadMandats(){
+    sb.from('pipeline_entreprises').select('mandat_slug,classe,statut,updated_at').then(function(r){
+      if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
+      MSTATS=r.data||[]; renderMandats();
+    });
+  }
+  function mandatList(){
+    // mandats configurés + slugs présents en base mais pas encore déclarés
+    var list=MANDATS.slice(), known={};
+    list.forEach(function(m){known[m.slug]=1;});
+    MSTATS.forEach(function(d){ if(d.mandat_slug&&!known[d.mandat_slug]){ known[d.mandat_slug]=1;
+      list.push({slug:d.mandat_slug,titre:d.mandat_slug,client:'',zone:'',page:'',statut:'Non configuré',villes:[],branches:[]}); } });
+    return list;
+  }
+  function renderMandats(){
+    document.getElementById('mGrid').innerHTML=mandatList().map(function(m){
+      var rows=MSTATS.filter(function(d){return d.mandat_slug===m.slug;});
+      var a=rows.filter(function(d){return d.classe==='A';}).length;
+      var rdv=rows.filter(function(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}).length;
+      var last=rows.reduce(function(x,d){return (d.updated_at||'')>x?d.updated_at:x;},'');
+      return '<div class="mcard" onclick="openMandat(\''+esc(m.slug)+'\')">'+
+        '<span class="badge '+(m.statut==='En cours'?'c':'i')+'">'+esc(m.statut)+'</span>'+
+        '<h3 style="margin-top:10px">'+esc(m.titre)+'</h3>'+
+        '<div class="client">'+esc(m.client)+'</div>'+
+        (m.zone?'<div class="zone">'+esc(m.zone)+'</div>':'')+
+        '<div class="mnums"><div><b>'+rows.length+'</b>Entreprises</div><div><b>'+a+'</b>Classe A</div><div><b>'+rdv+'</b>Rencontres</div></div>'+
+        '<div class="mfoot">'+(last?'Dernière mise à jour : '+fmtDate(last):'Aucune fiche pour l\'instant')+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  function fillOpts(sel,vals){
+    var first=sel.options[0]; sel.innerHTML=''; sel.appendChild(first);
+    vals.forEach(function(v){var o=document.createElement('option');o.textContent=v;sel.appendChild(o);});
+  }
+  function openMandat(slug){
+    MANDAT=slug; MCFG=mandatList().find(function(m){return m.slug===slug;});
+    document.getElementById('pTitle').textContent='Mandat '+MCFG.titre+(MCFG.client?' — '+MCFG.client:'');
+    document.getElementById('pSub').textContent=MCFG.zone;
+    var link=document.getElementById('pClient'); link.style.display=MCFG.page?'':'none'; link.href=MCFG.page||'#';
+    var form=document.getElementById('jForm');
+    fillOpts(document.getElementById('jVille'),MCFG.villes); fillOpts(form.elements.ville,MCFG.villes);
+    fillOpts(document.getElementById('jBranche'),MCFG.branches); fillOpts(form.elements.branche,MCFG.branches);
+    ['jSearch','jStatut','jClasse'].forEach(function(id){document.getElementById(id).value='';});
+    JROWS=[]; renderPipe(); showView('mandats');
+  }
+  function backToMandats(){ MANDAT=null; MCFG=null; showView('mandats'); }
+
+  var JROWS=[], jCurrent=null, jSortKey='updated_at', jSortAsc=false;
   var JCOLS=[
     {k:'updated_at',label:'Mise à jour'},{k:'nom',label:'Entreprise'},{k:'proprietaire',label:'Propriétaire'},
     {k:'ville',label:'Ville'},{k:'branche',label:'Branche'},{k:'statut',label:'Statut'},{k:'classe',label:'Classe'},
@@ -450,13 +525,13 @@
     'ca','ebitda','resultat_net','fonds_propres','dette_nette','loyers','investissements','prix',
     'statut','classe','prochaine_etape','date_relance','notes'];
 
-  function loadJacot(){
+  function loadPipe(){
     sb.from('pipeline_entreprises').select('*').eq('mandat_slug',MANDAT).order('updated_at',{ascending:false}).then(function(r){
       if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
-      JROWS=r.data||[]; renderJacot();
+      JROWS=r.data||[]; renderPipe();
     });
   }
-  function jacotFiltered(){
+  function pipeFiltered(){
     var q=document.getElementById('jSearch').value.toLowerCase();
     var fv=document.getElementById('jVille').value, fb=document.getElementById('jBranche').value,
         fs=document.getElementById('jStatut').value, fc=document.getElementById('jClasse').value;
@@ -474,10 +549,10 @@
     });
     return rows;
   }
-  function setJSort(k){ if(jSortKey===k)jSortAsc=!jSortAsc; else{jSortKey=k;jSortAsc=true;} renderJacot(); }
+  function setJSort(k){ if(jSortKey===k)jSortAsc=!jSortAsc; else{jSortKey=k;jSortAsc=true;} renderPipe(); }
   function fmtDay(s){ if(!s)return''; var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('fr-CH'); }
-  function renderJacot(){
-    var rows=jacotFiltered();
+  function renderPipe(){
+    var rows=pipeFiltered();
     var n=function(f){return JROWS.filter(f).length;};
     document.getElementById('jStats').innerHTML=stat(JROWS.length,'Entreprises')+
       stat(n(function(d){return d.classe==='A';}),'A — concrète')+
@@ -489,7 +564,7 @@
       return '<th onclick="setJSort(\''+c.k+'\')">'+c.label+ar+'</th>';
     }).join('');
     document.getElementById('jBody').innerHTML=rows.map(function(d){
-      return '<tr onclick="openJacot(\''+esc(d.id)+'\')">'+JCOLS.map(function(c){
+      return '<tr onclick="openFiche(\''+esc(d.id)+'\')">'+JCOLS.map(function(c){
         var v=d[c.k]||'';
         if(c.k==='updated_at')v=fmtDate(v);
         if(c.k==='date_relance')v=fmtDay(v);
@@ -504,18 +579,22 @@
     document.getElementById('jCount').textContent=rows.length+' entreprise(s) affichée(s)';
   }
 
-  function openJacot(id){
+  function openFiche(id){
     jCurrent=id;
     var d=id?JROWS.find(function(x){return String(x.id)===String(id);}):null;
     var form=document.getElementById('jForm'); form.reset();
-    if(d){ JFIELDS.forEach(function(k){ if(form.elements[k]) form.elements[k].value=d[k]==null?'':d[k]; }); }
+    if(d){ JFIELDS.forEach(function(k){
+      var el=form.elements[k], v=d[k]==null?'':d[k];
+      // valeur hors liste (ville/branche saisie ailleurs) : on l'ajoute pour ne pas la perdre
+      if(el.tagName==='SELECT'&&v&&![].some.call(el.options,function(o){return o.value===v;})){var o=document.createElement('option');o.textContent=v;el.appendChild(o);}
+      el.value=v; }); }
     document.getElementById('jTitle').textContent=d?(d.nom||'Entreprise'):'Nouvelle entreprise';
     document.getElementById('jDelete').style.display=d?'inline-block':'none';
     document.getElementById('jOverlay').classList.add('on');
     form.elements.nom.focus();
   }
-  function closeJacot(){ document.getElementById('jOverlay').classList.remove('on'); jCurrent=null; }
-  function saveJacot(){
+  function closeFiche(){ document.getElementById('jOverlay').classList.remove('on'); jCurrent=null; }
+  function saveFiche(){
     var form=document.getElementById('jForm'), data={mandat_slug:MANDAT};
     JFIELDS.forEach(function(k){ var v=form.elements[k].value.trim(); data[k]=v===''?null:v; }); // null plutôt que '' (colonne date)
     if(!data.nom){alert("Le nom de l'entreprise est requis.");form.elements.nom.focus();return;}
@@ -527,31 +606,31 @@
       btn.disabled=false;
       if(r.error){alert("Échec de l'enregistrement : "+r.error.message);return;}
       if(!r.data||!r.data.length){alert("Aucune ligne enregistrée — vérifiez que la session admin est active.");return;} // RLS : refus silencieux
-      closeJacot(); loadJacot();
+      closeFiche(); loadPipe();
     });
   }
-  function deleteJacot(){
+  function deleteFiche(){
     if(!jCurrent)return;
     var d=JROWS.find(function(x){return String(x.id)===String(jCurrent);});
     if(!confirm('Supprimer définitivement « '+((d&&d.nom)||'cette entreprise')+' » du pipeline ?'))return;
     sb.from('pipeline_entreprises').delete().eq('id',jCurrent).select().then(function(r){
       if(r.error){alert('Échec de la suppression : '+r.error.message);return;}
       if(!r.data||!r.data.length){alert("Suppression refusée — vérifiez que la session admin est active.");return;}
-      closeJacot(); loadJacot();
+      closeFiche(); loadPipe();
     });
   }
-  function exportJacotCSV(){
+  function exportPipeCSV(){
     var cols=['updated_at'].concat(JFIELDS);
-    var lines=jacotFiltered().map(function(d){return cols.map(function(k){
+    var lines=pipeFiltered().map(function(d){return cols.map(function(k){
       var v=(k==='updated_at')?fmtDate(d[k]):(d[k]||''); v=String(v);
       if(/^([=@\t\r]|[+\-][^\d\s])/.test(v))v="'"+v;
       return '"'+v.replace(/"/g,'""')+'"';}).join(';');});
     var csv='\ufeff'+cols.join(';')+'\n'+lines.join('\n');
     var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-    a.download='novad-pipeline-jacot-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+    a.download='novad-pipeline-'+MANDAT+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   }
-  document.getElementById('jOverlay').addEventListener('click',function(e){if(e.target===this)closeJacot();});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeJacot();});
+  document.getElementById('jOverlay').addEventListener('click',function(e){if(e.target===this)closeFiche();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFiche();});
 
   document.getElementById('pass').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
 </script>
