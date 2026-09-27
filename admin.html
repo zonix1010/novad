@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{--ink:#141210;--paper:#f7f3ec;--paper2:#efe8dc;--line:#d8cebd;--muted:#5c554a;--accent:#1f4d3a;--accent2:#c56a2e;--card:#fffdf8}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -73,6 +75,13 @@
   #jBody tr.excl td strong{text-decoration:line-through}
   .badge.x{background:#f1e2da;color:#b6533a}
   .exclwarn{background:#f1e2da;color:#b6533a;border-radius:6px;padding:10px 14px;font-size:13.5px;font-weight:600;margin-bottom:12px}
+  .modebar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .zoombtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .zoombtns .btn{padding:6px 12px;font-size:12.5px}
+  #adMap{height:600px;border:1px solid var(--line);border-radius:8px;background:var(--paper2)}
+  #adMap .leaflet-tile-pane{filter:grayscale(.8) sepia(.12) brightness(1.04) contrast(.92)}
+  .maplegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .maplegend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
   /* mandats */
   .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
   .mcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;cursor:pointer;transition:all .15s}
@@ -210,8 +219,16 @@
       <select id="jStatut" onchange="renderPipe()"><option value="">Tous statuts</option><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option><option value="__rdv">Rencontres (toutes)</option></select>
       <select id="jClasse" onchange="renderPipe()"><option value="">Toutes classes</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select>
     </div>
+    <div class="modebar">
+      <div class="vtabs"><button id="jmListe" class="on" onclick="setJMode('liste')">Liste</button><button id="jmCarte" onclick="setJMode('carte')">Carte</button></div>
+      <div class="zoombtns" id="jZoom" style="display:none"></div>
+    </div>
     <div class="count" id="jCount"></div>
-    <div class="tablewrap">
+    <div id="jMapView" style="display:none">
+      <div id="adMap"></div>
+      <div class="maplegend"><span><i style="background:#1f4d3a"></i>A — concrète</span><span><i style="background:#c56a2e"></i>B — potentielle</span><span><i style="background:#9a9184"></i>C — long terme</span><span><i style="background:#141210"></i>Non classée</span><span><i style="background:#fff;box-shadow:0 0 0 1px #9a9184"></i>Masquée au client (bordure pointillée)</span><span>Clic sur un point = ouvrir la fiche</span></div>
+    </div>
+    <div class="tablewrap" id="jListView">
       <table>
         <thead><tr id="jHead"></tr></thead>
         <tbody id="jBody"></tbody>
@@ -664,6 +681,51 @@
     document.getElementById('jEmpty').style.display=rows.length?'none':'block';
     document.getElementById('jCount').textContent=rows.length+' entreprise(s) affichée(s)';
     renderPVal();
+    JLAST=rows; if(jMode==='carte')drawAdMap(false);
+  }
+  // ---- Carte (Leaflet + OpenStreetMap) : mêmes filtres que le tableau ----
+  var jMode='liste', AMAP=null, ALAYER=null, JLAST=[];
+  function setJMode(m){
+    jMode=m;
+    document.getElementById('jmListe').classList.toggle('on',m==='liste');
+    document.getElementById('jmCarte').classList.toggle('on',m==='carte');
+    document.getElementById('jListView').style.display=m==='liste'?'':'none';
+    document.getElementById('jMapView').style.display=m==='carte'?'':'none';
+    var z=document.getElementById('jZoom'); z.style.display=m==='carte'?'':'none';
+    z.innerHTML='<span class="count" id="jMapCount" style="margin:0 6px 0 0"></span>'+((MCFG&&MCFG.villes)||[]).filter(function(v){return v!=='Autre';})
+      .map(function(v){return '<button class="btn" onclick="zoomAd(\''+esc(v)+'\')">'+esc(v)+'</button>';}).join('')+'<button class="btn" onclick="zoomAd(\'\')">Tout</button>';
+    if(m==='carte'){
+      if(!AMAP&&window.L){
+        AMAP=L.map('adMap',{scrollWheelZoom:false}).setView([46.73,7.0],9);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(AMAP);
+        ALAYER=L.layerGroup().addTo(AMAP);
+        AMAP.on('focus',function(){AMAP.scrollWheelZoom.enable();}); AMAP.on('blur',function(){AMAP.scrollWheelZoom.disable();});
+      }
+      setTimeout(function(){AMAP.invalidateSize();drawAdMap(true);},30);
+    }
+  }
+  function pinColor(d){return d.classe==='A'?'#1f4d3a':d.classe==='B'?'#c56a2e':d.classe==='C'?'#9a9184':'#141210';}
+  function drawAdMap(fit){
+    if(!AMAP)return;
+    ALAYER.clearLayers(); var seen={}, pts=[];
+    JLAST.forEach(function(d){
+      if(d.lat==null||d.lng==null)return;
+      var k=(+d.lat).toFixed(5)+','+(+d.lng).toFixed(5), n=seen[k]=(seen[k]||0)+1;
+      var ll=[+d.lat,+d.lng+(n-1)*0.00012]; // décale les enseignes à la même adresse
+      var hid=d.visible_client===false;
+      var m=L.circleMarker(ll,{radius:8,color:hid?'#9a9184':'#fff',weight:2,dashArray:hid?'3':null,fillColor:pinColor(d),fillOpacity:.95});
+      m.bindTooltip('<strong>'+esc(d.nom||'')+'</strong><br>'+esc(rue(d)||d.ville||'')+'<br>'+esc(d.statut||'À contacter')+
+        (d.date_rencontre?' · '+esc(fmtRdv(d.date_rencontre)):'')+(hid?'<br><em>Masquée au client</em>':''),{direction:'top',offset:[0,-6]});
+      m.on('click',function(){openFiche(String(d.id));});
+      m.addTo(ALAYER); pts.push(ll);
+    });
+    var miss=JLAST.length-pts.length, c=document.getElementById('jMapCount');
+    if(c)c.textContent=pts.length+' sur la carte'+(miss?' · '+miss+' sans position':'');
+    if(fit&&pts.length)AMAP.fitBounds(pts,{padding:[30,30],maxZoom:16});
+  }
+  function zoomAd(v){
+    var pts=JLAST.filter(function(d){return d.lat!=null&&(!v||d.ville===v);}).map(function(d){return [+d.lat,+d.lng];});
+    if(pts.length)AMAP.fitBounds(pts,{padding:[30,30],maxZoom:16});
   }
   // Validation de la liste par le client (faite une seule fois, côté page client)
   function renderPVal(){
