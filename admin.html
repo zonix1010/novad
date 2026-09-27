@@ -270,8 +270,11 @@
       <fieldset>
         <legend>Suivi</legend>
         <div class="row2">
-          <div><label>Statut</label><select name="statut"><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select></div>
+          <div><label>Statut</label><select name="statut" onchange="toggleRdv()"><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select></div>
           <div><label>Classification</label><select name="classe"><option value="">—</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select></div>
+        </div>
+        <div id="rdvField" style="display:none">
+          <label>Date et heure de la rencontre</label><input name="date_rencontre" type="datetime-local">
         </div>
         <div class="row2">
           <div><label>Prochaine étape</label><input name="prochaine_etape"></div>
@@ -545,14 +548,14 @@
   var JROWS=[], jCurrent=null, jSortKey='updated_at', jSortAsc=false;
   var JCOLS=[
     {k:'updated_at',label:'Mise à jour'},{k:'nom',label:'Entreprise'},{k:'proprietaire',label:'Propriétaire'},
-    {k:'ville',label:'Ville'},{k:'branche',label:'Branche'},{k:'statut',label:'Statut'},{k:'classe',label:'Classe'},
+    {k:'ville',label:'Ville'},{k:'branche',label:'Branche'},{k:'statut',label:'Statut'},{k:'date_rencontre',label:'Rencontre'},{k:'classe',label:'Classe'},
     {k:'ouverture',label:'Ouverture'},{k:'succession',label:'Succession'},{k:'ca',label:'CA'},{k:'prix',label:'Prix souhaité'},
     {k:'prochaine_etape',label:'Prochaine étape'},{k:'date_relance',label:'Relance'},{k:'contact',label:'Contact'}
   ];
   // tous les champs de la fiche (ordre de l'export CSV)
   var JFIELDS=['nom','proprietaire','ville','branche','pdv','contact','ouverture','succession','horizon','type_transaction',
     'ca','ebitda','resultat_net','fonds_propres','dette_nette','loyers','investissements','prix',
-    'statut','classe','prochaine_etape','date_relance','notes'];
+    'statut','date_rencontre','classe','prochaine_etape','date_relance','notes'];
 
   function loadPipe(){
     sb.from('pipeline_entreprises').select('*').eq('mandat_slug',MANDAT).order('updated_at',{ascending:false}).then(function(r){
@@ -609,6 +612,7 @@
         var v=d[c.k]||'';
         if(c.k==='updated_at')v=fmtDate(v);
         if(c.k==='date_relance')v=fmtDay(v);
+        if(c.k==='date_rencontre')v=fmtRdv(v);
         if(c.k==='statut'&&!v)v='À contacter';
         v=esc(v);
         if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>';
@@ -620,6 +624,16 @@
     document.getElementById('jCount').textContent=rows.length+' entreprise(s) affichée(s)';
   }
 
+  // Rencontre : date + heure (colonne timestamptz <-> champ datetime-local en heure locale)
+  function fmtRdv(s){ if(!s)return''; var d=new Date(s); if(isNaN(d))return s; return d.toLocaleDateString('fr-CH')+' · '+d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit'}); }
+  function toLocalInput(s){ if(!s)return''; var d=new Date(s); if(isNaN(d))return''; var p=function(n){return String(n).padStart(2,'0');};
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); }
+  function toggleRdv(){
+    var f=document.getElementById('jForm');
+    var show=isRdv({statut:f.elements.statut.value})||!!f.elements.date_rencontre.value;
+    document.getElementById('rdvField').style.display=show?'':'none';
+    if(isRdv({statut:f.elements.statut.value})&&!f.elements.date_rencontre.value)f.elements.date_rencontre.focus();
+  }
   function openFiche(id){
     jCurrent=id;
     var d=id?JROWS.find(function(x){return String(x.id)===String(id);}):null;
@@ -628,7 +642,8 @@
       var el=form.elements[k], v=d[k]==null?'':d[k];
       // valeur hors liste (ville/branche saisie ailleurs) : on l'ajoute pour ne pas la perdre
       if(el.tagName==='SELECT'&&v&&![].some.call(el.options,function(o){return o.value===v;})){var o=document.createElement('option');o.textContent=v;el.appendChild(o);}
-      el.value=v; }); }
+      el.value=(k==='date_rencontre')?toLocalInput(v):v; }); }
+    document.getElementById('rdvField').style.display=(d&&(isRdv(d)||d.date_rencontre))?'':'none';
     document.getElementById('jTitle').textContent=d?(d.nom||'Entreprise'):'Nouvelle entreprise';
     document.getElementById('jDelete').style.display=d?'inline-block':'none';
     document.getElementById('jOverlay').classList.add('on');
@@ -662,6 +677,7 @@
   function doSaveFiche(){
     var form=document.getElementById('jForm'), data={mandat_slug:MANDAT};
     JFIELDS.forEach(function(k){ var v=form.elements[k].value.trim(); data[k]=v===''?null:v; }); // null plutôt que '' (colonne date)
+    if(data.date_rencontre)data.date_rencontre=new Date(data.date_rencontre).toISOString(); // heure locale -> UTC
     if(!data.nom){alert("Le nom de l'entreprise est requis.");form.elements.nom.focus();return;}
     data.updated_at=new Date().toISOString();
     var btn=document.getElementById('jSave'); btn.disabled=true;
