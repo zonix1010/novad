@@ -267,8 +267,8 @@
           <div><label>Propriétaire</label><input name="proprietaire"></div>
         </div>
         <div class="row3">
-          <div><label>Ville</label><select name="ville"><option value="">—</option></select></div>
-          <div><label>Branche</label><select name="branche"><option value="">—</option></select></div>
+          <div><label>Ville</label><input name="ville" list="dlVille" autocomplete="off"><datalist id="dlVille"></datalist></div>
+          <div><label>Branche</label><input name="branche" list="dlBranche" autocomplete="off"><datalist id="dlBranche"></datalist></div>
           <div><label>Points de vente / tea-room</label><input name="pdv"></div>
         </div>
         <label>Contact (email / tél.)</label><input name="contact">
@@ -312,7 +312,7 @@
         </div>
         <label>Notes</label><textarea name="notes"></textarea>
         <label>Visible par le client</label>
-        <select name="visible_client"><option value="true">Oui — le client voit cette fiche</option><option value="false">Non — masquée au client (ex. bonus Fribourg)</option></select>
+        <select name="visible_client"><option value="true">Oui — le client voit cette fiche</option><option value="false">Non — masquée au client (ex. piste bonus)</option></select>
         <label>Épingler en tête de liste</label>
         <select name="epingle"><option value="false">Non</option><option value="true">Oui — toujours en première position (admin et client)</option></select>
       </fieldset>
@@ -522,22 +522,19 @@
   }
 
   // ---------- vue Mandats (table pipeline_entreprises, une ligne = une fiche, mandat_slug = le mandat) ----------
-  // Nouveau mandat : ajouter une entrée ici (slug = valeur de mandat_slug en base).
-  var MANDATS=[
-    {slug:'jacot', titre:'Jacot', client:'Groupe Haute Chocolaterie — Daniel Knoepfel',
-     zone:'Confiseries / chocolateries / pâtisseries · Berne, Lausanne (+ Fribourg)',
-     page:'pipeline-jacot.html', statut:'En cours',
-     villes:['Berne','Lausanne','Fribourg','Autre'],
-     branches:['Confiserie','Chocolaterie','Pâtisserie','Boulangerie-pâtisserie','Glacier','Grand magasin']}
-  ];
+  // Les mandats (nom du client, sous-titre, page client) sont dans la table Supabase « mandats » :
+  // rien de confidentiel dans ce fichier, le dépôt est public. Villes et branches viennent des fiches.
+  var MANDATS=[];
   var MANDAT=null, MCFG=null, MSTATS=[], MVALS={}, JVAL=null, jShowExcl=false;
 
   function loadMandats(){
     Promise.all([
       sb.from('pipeline_entreprises').select('mandat_slug,classe,statut,updated_at,exclu_client'),
-      sb.from('mandat_validation').select('mandat_slug,valide_le') // absente tant que le script SQL n'a pas été lancé : ignorée
+      sb.from('mandat_validation').select('mandat_slug,valide_le'), // absente tant que le script SQL n'a pas été lancé : ignorée
+      sb.from('mandats').select('*').order('ordre',{ascending:true})
     ]).then(function(res){
       if(res[0].error){alert('Erreur de lecture : '+res[0].error.message);return;}
+      MANDATS=res[2].data||[];
       MSTATS=res[0].data||[]; MVALS={};
       (res[1].data||[]).forEach(function(v){MVALS[v.mandat_slug]=v;});
       renderMandats();
@@ -548,7 +545,7 @@
     var list=MANDATS.slice(), known={};
     list.forEach(function(m){known[m.slug]=1;});
     MSTATS.forEach(function(d){ if(d.mandat_slug&&!known[d.mandat_slug]){ known[d.mandat_slug]=1;
-      list.push({slug:d.mandat_slug,titre:d.mandat_slug,client:'',zone:'',page:'',statut:'Non configuré',villes:[],branches:[]}); } });
+      list.push({slug:d.mandat_slug,titre:d.mandat_slug,client:'',sous_titre:'',page:'',statut:'Non configuré'}); } });
     return list;
   }
   function renderMandats(){
@@ -562,7 +559,7 @@
         '<span class="badge '+(m.statut==='En cours'?'c':'i')+'">'+esc(m.statut)+'</span>'+
         '<h3 style="margin-top:10px">'+esc(m.titre)+'</h3>'+
         '<div class="client">'+esc(m.client)+'</div>'+
-        (m.zone?'<div class="zone">'+esc(m.zone)+'</div>':'')+
+        (m.sous_titre?'<div class="zone">'+esc(m.sous_titre)+'</div>':'')+
         '<div class="mnums"><div><b>'+rows.length+'</b>Entreprises</div><div><b>'+a+'</b>Classe A</div><div><b>'+rdv+'</b>Rencontres</div></div>'+
         '<div class="mfoot" style="font-weight:600;color:'+(v?'var(--accent)':'var(--accent2)')+'">'+(v?'✓ Liste validée par le client le '+fmtDay(v.valide_le):'Liste en attente de validation client')+'</div>'+
         '<div class="mfoot">'+(last?'Dernière mise à jour : '+fmtDate(last):'Aucune fiche pour l\'instant')+'</div>'+
@@ -573,14 +570,19 @@
     var first=sel.options[0]; sel.innerHTML=''; sel.appendChild(first);
     vals.forEach(function(v){var o=document.createElement('option');o.textContent=v;sel.appendChild(o);});
   }
+  function distinct(k){ var o={}; JROWS.forEach(function(d){ if(d[k])o[d[k]]=1; }); return Object.keys(o).sort(); }
+  function refreshOpts(){
+    ['jVille','jBranche'].forEach(function(id,i){ var sel=document.getElementById(id), cur=sel.value;
+      fillOpts(sel,distinct(i?'branche':'ville')); sel.value=cur; });
+    document.getElementById('dlVille').innerHTML=distinct('ville').concat(['Autre']).map(function(v){return '<option value="'+esc(v)+'">';}).join('');
+    document.getElementById('dlBranche').innerHTML=distinct('branche').map(function(v){return '<option value="'+esc(v)+'">';}).join('');
+  }
   function openMandat(slug){
     MANDAT=slug; MCFG=mandatList().find(function(m){return m.slug===slug;});
     document.getElementById('pTitle').textContent='Mandat '+MCFG.titre+(MCFG.client?' — '+MCFG.client:'');
-    document.getElementById('pSub').textContent=MCFG.zone;
+    document.getElementById('pSub').textContent=MCFG.sous_titre||'';
     var link=document.getElementById('pClient'); link.style.display=MCFG.page?'':'none'; link.href=MCFG.page||'#';
-    var form=document.getElementById('jForm');
-    fillOpts(document.getElementById('jVille'),MCFG.villes); fillOpts(form.elements.ville,MCFG.villes);
-    fillOpts(document.getElementById('jBranche'),MCFG.branches); fillOpts(form.elements.branche,MCFG.branches);
+    fillOpts(document.getElementById('jVille'),[]); fillOpts(document.getElementById('jBranche'),[]);
     ['jSearch','jStatut','jClasse'].forEach(function(id){document.getElementById(id).value='';});
     JROWS=[]; JVAL=null; jShowExcl=false; renderPipe(); showView('mandats');
   }
@@ -604,7 +606,7 @@
       sb.from('mandat_validation').select('*').eq('mandat_slug',MANDAT).maybeSingle()
     ]).then(function(res){
       if(res[0].error){alert('Erreur de lecture : '+res[0].error.message);return;}
-      JROWS=res[0].data||[]; JVAL=res[1].data||null; renderPipe();
+      JROWS=res[0].data||[]; JVAL=res[1].data||null; refreshOpts(); renderPipe();
     });
   }
   function pipeFiltered(){
@@ -692,7 +694,7 @@
     document.getElementById('jListView').style.display=m==='liste'?'':'none';
     document.getElementById('jMapView').style.display=m==='carte'?'':'none';
     var z=document.getElementById('jZoom'); z.style.display=m==='carte'?'':'none';
-    z.innerHTML='<span class="count" id="jMapCount" style="margin:0 6px 0 0"></span>'+((MCFG&&MCFG.villes)||[]).filter(function(v){return v!=='Autre';})
+    z.innerHTML='<span class="count" id="jMapCount" style="margin:0 6px 0 0"></span>'+distinct('ville').filter(function(v){return v!=='Autre';})
       .map(function(v){return '<button class="btn" onclick="zoomAd(\''+esc(v)+'\')">'+esc(v)+'</button>';}).join('')+'<button class="btn" onclick="zoomAd(\'\')">Tout</button>';
     if(m==='carte'){
       if(!AMAP&&window.L){
@@ -742,7 +744,7 @@
     var m=(JVAL.manquantes||[])[i]; if(!m)return;
     openFiche(null);
     var f=document.getElementById('jForm'); f.elements.nom.value=m.nom||'';
-    if(m.ville){ var sel=f.elements.ville; if(![].some.call(sel.options,function(o){return o.value===m.ville;})){var o=document.createElement('option');o.textContent=m.ville;sel.appendChild(o);} sel.value=m.ville; }
+    if(m.ville)f.elements.ville.value=m.ville;
     f.elements.notes.value='Suggérée par le client lors de la validation de la liste.'+(m.commentaire?' '+m.commentaire:'');
   }
 
@@ -768,7 +770,8 @@
     document.getElementById('rdvField').style.display=(d&&(isRdv(d)||d.date_rencontre))?'':'none';
     document.getElementById('jTitle').textContent=d?(d.nom||'Entreprise'):'Nouvelle entreprise';
     document.getElementById('jExclWarn').style.display=(d&&d.exclu_client)?'':'none';
-    form.elements.ville.onchange=function(){ if(!jCurrent) form.elements.visible_client.value=(this.value==='Fribourg')?'false':'true'; };
+    form.elements.ville.onchange=function(){ if(jCurrent)return; var v=this.value.trim(), same=JROWS.filter(function(x){return x.ville===v;});
+      form.elements.visible_client.value=(same.length&&same.every(function(x){return x.visible_client===false;}))?'false':'true'; };
     document.getElementById('jDelete').style.display=d?'inline-block':'none';
     document.getElementById('jOverlay').classList.add('on');
     form.elements.nom.focus();
