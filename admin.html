@@ -294,6 +294,8 @@
           <div><label>Date de relance</label><input name="date_relance" type="date"></div>
         </div>
         <label>Notes</label><textarea name="notes"></textarea>
+        <label>Visible par le client</label>
+        <select name="visible_client"><option value="true">Oui — le client voit cette fiche</option><option value="false">Non — masquée au client (ex. bonus Fribourg)</option></select>
       </fieldset>
       <div class="modalfoot">
         <button class="btn danger" type="button" id="jDelete" style="display:none" onclick="deleteFiche()">Supprimer</button>
@@ -575,7 +577,7 @@
   // tous les champs de la fiche (ordre de l'export CSV)
   var JFIELDS=['nom','proprietaire','ville','branche','pdv','contact','ouverture','succession','horizon','type_transaction',
     'ca','ebitda','resultat_net','fonds_propres','dette_nette','loyers','investissements','prix',
-    'statut','date_rencontre','classe','prochaine_etape','date_relance','notes'];
+    'statut','date_rencontre','classe','prochaine_etape','date_relance','notes','visible_client'];
 
   function loadPipe(){
     Promise.all([
@@ -643,7 +645,7 @@
         if(c.k==='date_rencontre')v=fmtRdv(v);
         if(c.k==='statut'&&!v)v='À contacter';
         v=esc(v);
-        if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>'+(d.exclu_client?' <span class="badge x">Exclue</span>':'');
+        if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>'+(d.exclu_client?' <span class="badge x">Exclue</span>':'')+(d.visible_client===false?' <span class="badge i" title="Cette fiche n\'apparaît pas dans la vue client">Masquée client</span>':'');
         if(c.k==='classe'&&v)v='<span class="pill '+v+'">'+v+'</span>';
         return '<td>'+v+'</td>';
       }).join('')+'</tr>';
@@ -689,10 +691,11 @@
       var el=form.elements[k], v=d[k]==null?'':d[k];
       // valeur hors liste (ville/branche saisie ailleurs) : on l'ajoute pour ne pas la perdre
       if(el.tagName==='SELECT'&&v&&![].some.call(el.options,function(o){return o.value===v;})){var o=document.createElement('option');o.textContent=v;el.appendChild(o);}
-      el.value=(k==='date_rencontre')?toLocalInput(v):v; }); }
+      el.value=(k==='date_rencontre')?toLocalInput(v):(k==='visible_client')?String(d.visible_client!==false):v; }); }
     document.getElementById('rdvField').style.display=(d&&(isRdv(d)||d.date_rencontre))?'':'none';
     document.getElementById('jTitle').textContent=d?(d.nom||'Entreprise'):'Nouvelle entreprise';
     document.getElementById('jExclWarn').style.display=(d&&d.exclu_client)?'':'none';
+    form.elements.ville.onchange=function(){ if(!jCurrent) form.elements.visible_client.value=(this.value==='Fribourg')?'false':'true'; };
     document.getElementById('jDelete').style.display=d?'inline-block':'none';
     document.getElementById('jOverlay').classList.add('on');
     form.elements.nom.focus();
@@ -726,6 +729,7 @@
     var form=document.getElementById('jForm'), data={mandat_slug:MANDAT};
     JFIELDS.forEach(function(k){ var v=form.elements[k].value.trim(); data[k]=v===''?null:v; }); // null plutôt que '' (colonne date)
     if(data.date_rencontre)data.date_rencontre=new Date(data.date_rencontre).toISOString(); // heure locale -> UTC
+    data.visible_client=(data.visible_client!=='false');
     if(!data.nom){alert("Le nom de l'entreprise est requis.");form.elements.nom.focus();return;}
     data.updated_at=new Date().toISOString();
     var btn=document.getElementById('jSave'); btn.disabled=true;
