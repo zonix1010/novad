@@ -300,7 +300,16 @@
   var LEADS=[], sortKey='created_at', sortAsc=false;
 
   // -- session au chargement --
-  sb.auth.getSession().then(function(r){ if(r.data.session){ showApp(); } });
+  // Seul le compte admin entre ici (la sécurité réelle est dans les règles Supabase ; ceci évite qu'un compte client voie le panneau).
+  var ADMIN_EMAIL='zonix10@gmail.com';
+  function isAdmin(session){ return !!(session&&session.user&&(session.user.email||'').toLowerCase()===ADMIN_EMAIL); }
+  function refuse(){
+    sb.auth.signOut().then(function(){
+      document.getElementById('loginView').style.display=''; document.getElementById('appView').classList.remove('on');
+      document.getElementById('loginErr').textContent='Accès refusé : ce compte n\'est pas un compte administrateur.';
+    });
+  }
+  sb.auth.getSession().then(function(r){ if(r.data.session){ if(isAdmin(r.data.session)) showApp(); else refuse(); } });
 
   function login(){
     var email=document.getElementById('mail').value.trim();
@@ -308,6 +317,7 @@
     document.getElementById('loginErr').textContent='';
     sb.auth.signInWithPassword({email:email,password:pass}).then(function(r){
       if(r.error){document.getElementById('loginErr').textContent='Connexion refusée : '+r.error.message;return;}
+      if(!isAdmin(r.data.session)){refuse();return;}
       showApp();
     });
   }
@@ -626,6 +636,7 @@
     var email=document.getElementById('reMail').value.trim(), pass=document.getElementById('rePass').value;
     sb.auth.signInWithPassword({email:email,password:pass}).then(function(r){
       if(r.error){document.getElementById('reErr').textContent='Connexion refusée : '+r.error.message;return;}
+      if(!isAdmin(r.data.session)){document.getElementById('reOverlay').classList.remove('on');refuse();return;}
       document.getElementById('reOverlay').classList.remove('on');
       var fn=reAfter; reAfter=null; if(fn)fn();
     });
