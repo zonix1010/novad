@@ -79,7 +79,7 @@
   .zoombtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .zoombtns .btn{padding:6px 12px;font-size:12.5px}
   #adMap{height:600px;border:1px solid var(--line);border-radius:8px;background:var(--paper2)}
-  #adMap .leaflet-tile-pane{filter:grayscale(.8) sepia(.12) brightness(1.04) contrast(.92)}
+  #adMap{position:relative;z-index:0;isolation:isolate} #adMap .leaflet-tile-pane{filter:grayscale(1) brightness(1.08) contrast(.8) opacity(.85)} #adMap path.leaflet-interactive{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
   .maplegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
   .maplegend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
   /* mandats */
@@ -226,7 +226,7 @@
     <div class="count" id="jCount"></div>
     <div id="jMapView" style="display:none">
       <div id="adMap"></div>
-      <div class="maplegend"><span><i style="background:#1f4d3a"></i>A — concrète</span><span><i style="background:#c56a2e"></i>B — potentielle</span><span><i style="background:#9a9184"></i>C — long terme</span><span><i style="background:#141210"></i>Non classée</span><span><i style="background:#fff;box-shadow:0 0 0 1px #9a9184"></i>Masquée au client (bordure pointillée)</span><span>Clic sur un point = ouvrir la fiche</span></div>
+      <div class="maplegend"><span><i style="background:#1f7a4d"></i>A — concrète</span><span><i style="background:#e0a21b"></i>B — potentielle</span><span><i style="background:#6b7c93"></i>C — long terme</span><span><i style="background:#c2410c"></i>Non classée</span><span><i style="background:#fff;box-shadow:0 0 0 1px #6b7c93"></i>Masquée au client (bordure pointillée)</span><span>Clic sur un point = ouvrir la fiche</span></div>
     </div>
     <div class="tablewrap" id="jListView">
       <table>
@@ -704,7 +704,7 @@
       setTimeout(function(){AMAP.invalidateSize();drawAdMap(true);},30);
     }
   }
-  function pinColor(d){return d.classe==='A'?'#1f4d3a':d.classe==='B'?'#c56a2e':d.classe==='C'?'#9a9184':'#141210';}
+  function pinColor(d){return d.classe==='A'?'#1f7a4d':d.classe==='B'?'#e0a21b':d.classe==='C'?'#6b7c93':'#c2410c';}
   function drawAdMap(fit){
     if(!AMAP)return;
     ALAYER.clearLayers(); var seen={}, pts=[];
@@ -713,7 +713,7 @@
       var k=(+d.lat).toFixed(5)+','+(+d.lng).toFixed(5), n=seen[k]=(seen[k]||0)+1;
       var ll=[+d.lat,+d.lng+(n-1)*0.00012]; // décale les enseignes à la même adresse
       var hid=d.visible_client===false;
-      var m=L.circleMarker(ll,{radius:8,color:hid?'#9a9184':'#fff',weight:2,dashArray:hid?'3':null,fillColor:pinColor(d),fillOpacity:.95});
+      var m=L.circleMarker(ll,{radius:9,color:hid?'#6b7c93':'#fff',weight:2.5,dashArray:hid?'3':null,fillColor:pinColor(d),fillOpacity:.95});
       m.bindTooltip('<strong>'+esc(d.nom||'')+'</strong><br>'+esc(rue(d)||d.ville||'')+'<br>'+esc(d.statut||'À contacter')+
         (d.date_rencontre?' · '+esc(fmtRdv(d.date_rencontre)):'')+(hid?'<br><em>Masquée au client</em>':''),{direction:'top',offset:[0,-6]});
       m.on('click',function(){openFiche(String(d.id));});
