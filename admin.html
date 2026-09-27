@@ -206,6 +206,22 @@
   </div>
 </div>
 
+<!-- MODALE reconnexion (session expirée) -->
+<div class="overlay" id="reOverlay" style="z-index:60">
+  <div class="modal" style="max-width:380px;margin-top:10vh">
+    <h2>Session expirée</h2>
+    <p style="font-size:13.5px;color:var(--muted);margin-bottom:6px">Reconnectez-vous : votre saisie est conservée.</p>
+    <label for="reMail">Email</label><input id="reMail" type="email" autocomplete="username">
+    <label for="rePass">Mot de passe</label><input id="rePass" type="password" autocomplete="current-password">
+    <div class="login-err" id="reErr"></div>
+    <div class="modalfoot">
+      <div style="flex:1"></div>
+      <button class="btn" type="button" onclick="document.getElementById('reOverlay').classList.remove('on')">Annuler</button>
+      <button class="btn go" type="button" onclick="reLogin()">Se reconnecter</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODALE fiche entreprise (pipeline d'un mandat) -->
 <div class="overlay" id="jOverlay">
   <div class="modal">
@@ -594,7 +610,30 @@
     form.elements.nom.focus();
   }
   function closeFiche(){ document.getElementById('jOverlay').classList.remove('on'); jCurrent=null; }
-  function saveFiche(){
+  // Vérifie la session avant d'écrire ; si elle a expiré, demande de se reconnecter puis relance l'action.
+  var reAfter=null;
+  function withSession(fn){
+    sb.auth.getSession().then(function(r){
+      if(r.data.session){fn();return;}
+      reAfter=fn;
+      document.getElementById('reMail').value=document.getElementById('mail').value||'';
+      document.getElementById('rePass').value=''; document.getElementById('reErr').textContent='';
+      document.getElementById('reOverlay').classList.add('on');
+      document.getElementById(document.getElementById('reMail').value?'rePass':'reMail').focus();
+    });
+  }
+  function reLogin(){
+    var email=document.getElementById('reMail').value.trim(), pass=document.getElementById('rePass').value;
+    sb.auth.signInWithPassword({email:email,password:pass}).then(function(r){
+      if(r.error){document.getElementById('reErr').textContent='Connexion refusée : '+r.error.message;return;}
+      document.getElementById('reOverlay').classList.remove('on');
+      var fn=reAfter; reAfter=null; if(fn)fn();
+    });
+  }
+  document.getElementById('rePass').addEventListener('keydown',function(e){if(e.key==='Enter')reLogin();});
+
+  function saveFiche(){ withSession(doSaveFiche); }
+  function doSaveFiche(){
     var form=document.getElementById('jForm'), data={mandat_slug:MANDAT};
     JFIELDS.forEach(function(k){ var v=form.elements[k].value.trim(); data[k]=v===''?null:v; }); // null plutôt que '' (colonne date)
     if(!data.nom){alert("Le nom de l'entreprise est requis.");form.elements.nom.focus();return;}
@@ -613,6 +652,9 @@
     if(!jCurrent)return;
     var d=JROWS.find(function(x){return String(x.id)===String(jCurrent);});
     if(!confirm('Supprimer définitivement « '+((d&&d.nom)||'cette entreprise')+' » du pipeline ?'))return;
+    withSession(doDeleteFiche);
+  }
+  function doDeleteFiche(){
     sb.from('pipeline_entreprises').delete().eq('id',jCurrent).select().then(function(r){
       if(r.error){alert('Échec de la suppression : '+r.error.message);return;}
       if(!r.data||!r.data.length){alert("Suppression refusée — vérifiez que la session admin est active.");return;}
@@ -630,7 +672,7 @@
     a.download='novad-pipeline-'+MANDAT+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   }
   document.getElementById('jOverlay').addEventListener('click',function(e){if(e.target===this)closeFiche();});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFiche();});
+  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return; var ro=document.getElementById('reOverlay'); if(ro.classList.contains('on'))ro.classList.remove('on'); else closeFiche();});
 
   document.getElementById('pass').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
 </script>
