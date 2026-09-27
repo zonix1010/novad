@@ -570,7 +570,7 @@
   var JROWS=[], jCurrent=null, jSortKey='updated_at', jSortAsc=false;
   var JCOLS=[
     {k:'updated_at',label:'Mise à jour'},{k:'nom',label:'Entreprise'},{k:'proprietaire',label:'Propriétaire'},
-    {k:'ville',label:'Ville'},{k:'branche',label:'Branche'},{k:'statut',label:'Statut'},{k:'date_rencontre',label:'Rencontre'},{k:'classe',label:'Classe'},
+    {k:'ville',label:'Ville'},{k:'pdv',label:'Adresse'},{k:'branche',label:'Branche'},{k:'statut',label:'Statut'},{k:'date_rencontre',label:'Rencontre'},{k:'classe',label:'Classe'},
     {k:'ouverture',label:'Ouverture'},{k:'succession',label:'Succession'},{k:'ca',label:'CA'},{k:'prix',label:'Prix souhaité'},
     {k:'prochaine_etape',label:'Prochaine étape'},{k:'date_relance',label:'Relance'},{k:'contact',label:'Contact'}
   ];
@@ -598,7 +598,7 @@
       if(fb&&d.branche!==fb)return false;
       if(fs==='__rdv'){if(!isRdv(d))return false;} else if(fs&&(d.statut||'À contacter')!==fs)return false;
       if(fc&&d.classe!==fc)return false;
-      if(q){var blob=['nom','proprietaire','contact','prochaine_etape','notes'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
+      if(q){var blob=['nom','proprietaire','pdv','contact','prochaine_etape','notes'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
       return true;
     });
     rows.sort(function(a,b){
@@ -609,6 +609,13 @@
   }
   function setJSort(k){ if(jSortKey===k)jSortAsc=!jSortAsc; else{jSortKey=k;jSortAsc=true;} renderPipe(); }
   function fmtDay(s){ if(!s)return''; var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('fr-CH'); }
+  // Rue seule : « Spitalgasse 36, Berne » -> « Spitalgasse 36 » ; vide si l'adresse ne contient pas de rue
+  function rue(d){
+    var p=(d.pdv||'').trim(), v=(d.ville||'').trim();
+    if(!p)return'';
+    if(v){ p=p.split(', '+v).join('').trim(); if(p.indexOf(v)===0)return''; }
+    return p;
+  }
   function isRdv(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}
   function statFilter(k){
     var fc=document.getElementById('jClasse'), fs=document.getElementById('jStatut');
@@ -643,6 +650,7 @@
         if(c.k==='updated_at')v=fmtDate(v);
         if(c.k==='date_relance')v=fmtDay(v);
         if(c.k==='date_rencontre')v=fmtRdv(v);
+        if(c.k==='pdv')v=rue(d);
         if(c.k==='statut'&&!v)v='À contacter';
         v=esc(v);
         if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>'+(d.exclu_client?' <span class="badge x">Exclue</span>':'')+(d.visible_client===false?' <span class="badge i" title="Cette fiche n\'apparaît pas dans la vue client">Masquée client</span>':'');
