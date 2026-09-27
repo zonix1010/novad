@@ -62,6 +62,17 @@
   .stat.click{cursor:pointer;transition:border-color .15s}
   .stat.click:hover{border-color:var(--accent)}
   .stat.click.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .valbox{border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:13.5px}
+  .valbox.todo{background:#fbf3ea;border:1px solid var(--accent2);color:var(--accent2);font-weight:600}
+  .valbox.done{background:rgba(31,77,58,.07);border:1px solid var(--accent)}
+  .valbox.done b.t{color:var(--accent);display:block;margin-bottom:4px}
+  .valbox ul{margin:8px 0 0 0;list-style:none}
+  .valbox li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+  .valbox li span{color:var(--muted)}
+  #jBody tr.excl td{color:var(--muted);background:#f4efe7}
+  #jBody tr.excl td strong{text-decoration:line-through}
+  .badge.x{background:#f1e2da;color:#b6533a}
+  .exclwarn{background:#f1e2da;color:#b6533a;border-radius:6px;padding:10px 14px;font-size:13.5px;font-weight:600;margin-bottom:12px}
   /* mandats */
   .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
   .mcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;cursor:pointer;transition:all .15s}
@@ -190,6 +201,7 @@
         <button class="btn go" onclick="openFiche(null)">+ Nouvelle entreprise</button>
       </div>
     </div>
+    <div id="pVal"></div>
     <div class="stats" id="jStats"></div>
     <div class="filters">
       <input id="jSearch" placeholder="Rechercher (entreprise, propriétaire, contact, notes…)" oninput="renderPipe()">
@@ -229,6 +241,7 @@
 <div class="overlay" id="jOverlay">
   <div class="modal">
     <h2 id="jTitle">Nouvelle entreprise</h2>
+    <div class="exclwarn" id="jExclWarn" style="display:none">⚠ Exclue par le client lors de la validation de la liste — ne pas solliciter.</div>
     <form id="jForm" onsubmit="return false;">
       <fieldset>
         <legend>Identification</legend>
@@ -496,12 +509,17 @@
      villes:['Berne','Lausanne','Fribourg','Autre'],
      branches:['Confiserie','Chocolaterie','Pâtisserie','Boulangerie-pâtisserie','Glacier','Grand magasin']}
   ];
-  var MANDAT=null, MCFG=null, MSTATS=[];
+  var MANDAT=null, MCFG=null, MSTATS=[], MVALS={}, JVAL=null, jShowExcl=false;
 
   function loadMandats(){
-    sb.from('pipeline_entreprises').select('mandat_slug,classe,statut,updated_at').then(function(r){
-      if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
-      MSTATS=r.data||[]; renderMandats();
+    Promise.all([
+      sb.from('pipeline_entreprises').select('mandat_slug,classe,statut,updated_at,exclu_client'),
+      sb.from('mandat_validation').select('mandat_slug,valide_le') // absente tant que le script SQL n'a pas été lancé : ignorée
+    ]).then(function(res){
+      if(res[0].error){alert('Erreur de lecture : '+res[0].error.message);return;}
+      MSTATS=res[0].data||[]; MVALS={};
+      (res[1].data||[]).forEach(function(v){MVALS[v.mandat_slug]=v;});
+      renderMandats();
     });
   }
   function mandatList(){
@@ -514,7 +532,8 @@
   }
   function renderMandats(){
     document.getElementById('mGrid').innerHTML=mandatList().map(function(m){
-      var rows=MSTATS.filter(function(d){return d.mandat_slug===m.slug;});
+      var rows=MSTATS.filter(function(d){return d.mandat_slug===m.slug&&!d.exclu_client;});
+      var v=MVALS[m.slug];
       var a=rows.filter(function(d){return d.classe==='A';}).length;
       var rdv=rows.filter(function(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}).length;
       var last=rows.reduce(function(x,d){return (d.updated_at||'')>x?d.updated_at:x;},'');
@@ -524,6 +543,7 @@
         '<div class="client">'+esc(m.client)+'</div>'+
         (m.zone?'<div class="zone">'+esc(m.zone)+'</div>':'')+
         '<div class="mnums"><div><b>'+rows.length+'</b>Entreprises</div><div><b>'+a+'</b>Classe A</div><div><b>'+rdv+'</b>Rencontres</div></div>'+
+        '<div class="mfoot" style="font-weight:600;color:'+(v?'var(--accent)':'var(--accent2)')+'">'+(v?'✓ Liste validée par le client le '+fmtDay(v.valide_le):'Liste en attente de validation client')+'</div>'+
         '<div class="mfoot">'+(last?'Dernière mise à jour : '+fmtDate(last):'Aucune fiche pour l\'instant')+'</div>'+
       '</div>';
     }).join('');
@@ -541,7 +561,7 @@
     fillOpts(document.getElementById('jVille'),MCFG.villes); fillOpts(form.elements.ville,MCFG.villes);
     fillOpts(document.getElementById('jBranche'),MCFG.branches); fillOpts(form.elements.branche,MCFG.branches);
     ['jSearch','jStatut','jClasse'].forEach(function(id){document.getElementById(id).value='';});
-    JROWS=[]; renderPipe(); showView('mandats');
+    JROWS=[]; JVAL=null; jShowExcl=false; renderPipe(); showView('mandats');
   }
   function backToMandats(){ MANDAT=null; MCFG=null; showView('mandats'); }
 
@@ -558,9 +578,12 @@
     'statut','date_rencontre','classe','prochaine_etape','date_relance','notes'];
 
   function loadPipe(){
-    sb.from('pipeline_entreprises').select('*').eq('mandat_slug',MANDAT).order('updated_at',{ascending:false}).then(function(r){
-      if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
-      JROWS=r.data||[]; renderPipe();
+    Promise.all([
+      sb.from('pipeline_entreprises').select('*').eq('mandat_slug',MANDAT).order('updated_at',{ascending:false}),
+      sb.from('mandat_validation').select('*').eq('mandat_slug',MANDAT).maybeSingle()
+    ]).then(function(res){
+      if(res[0].error){alert('Erreur de lecture : '+res[0].error.message);return;}
+      JROWS=res[0].data||[]; JVAL=res[1].data||null; renderPipe();
     });
   }
   function pipeFiltered(){
@@ -568,6 +591,7 @@
     var fv=document.getElementById('jVille').value, fb=document.getElementById('jBranche').value,
         fs=document.getElementById('jStatut').value, fc=document.getElementById('jClasse').value;
     var rows=JROWS.filter(function(d){
+      if(!!d.exclu_client!==jShowExcl)return false; // exclues masquées, sauf via la carte « Exclues »
       if(fv&&d.ville!==fv)return false;
       if(fb&&d.branche!==fb)return false;
       if(fs==='__rdv'){if(!isRdv(d))return false;} else if(fs&&(d.statut||'À contacter')!==fs)return false;
@@ -586,6 +610,8 @@
   function isRdv(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}
   function statFilter(k){
     var fc=document.getElementById('jClasse'), fs=document.getElementById('jStatut');
+    if(k==='excl'){jShowExcl=!jShowExcl;renderPipe();return;}
+    jShowExcl=false;
     if(k==='all'){fc.value='';fs.value='';}
     else if(k==='rdv'){fs.value=(fs.value==='__rdv')?'':'__rdv';}
     else{fc.value=(fc.value===k)?'':k;}
@@ -593,35 +619,56 @@
   }
   function renderPipe(){
     var rows=pipeFiltered();
-    var n=function(f){return JROWS.filter(f).length;};
+    var act=JROWS.filter(function(d){return !d.exclu_client;});
+    var n=function(f){return act.filter(f).length;};
     var fc=document.getElementById('jClasse').value, fs=document.getElementById('jStatut').value;
     // cartes cliquables : filtrent le tableau comme les listes déroulantes
     document.getElementById('jStats').innerHTML=[
-      {k:'all',l:'Entreprises',v:JROWS.length,on:!fc&&!fs},
+      {k:'all',l:'Entreprises',v:act.length,on:!fc&&!fs&&!jShowExcl},
       {k:'A',l:'A — concrète',v:n(function(d){return d.classe==='A';}),on:fc==='A'},
       {k:'B',l:'B — potentielle',v:n(function(d){return d.classe==='B';}),on:fc==='B'},
       {k:'C',l:'C — long terme',v:n(function(d){return d.classe==='C';}),on:fc==='C'},
-      {k:'rdv',l:'Rencontres',v:n(isRdv),on:fs==='__rdv'}
+      {k:'rdv',l:'Rencontres',v:n(isRdv),on:fs==='__rdv'},
+      {k:'excl',l:'Exclues par le client',v:JROWS.length-act.length,on:jShowExcl}
     ].map(function(c){return '<div class="stat click'+(c.on?' on':'')+'" onclick="statFilter(\''+c.k+'\')"><b>'+c.v+'</b><span>'+c.l+'</span></div>';}).join('');
     document.getElementById('jHead').innerHTML=JCOLS.map(function(c){
       var ar=(jSortKey===c.k)?(jSortAsc?' ▲':' ▼'):'';
       return '<th onclick="setJSort(\''+c.k+'\')">'+c.label+ar+'</th>';
     }).join('');
     document.getElementById('jBody').innerHTML=rows.map(function(d){
-      return '<tr onclick="openFiche(\''+esc(d.id)+'\')">'+JCOLS.map(function(c){
+      return '<tr class="'+(d.exclu_client?'excl':'')+'" onclick="openFiche(\''+esc(d.id)+'\')">'+JCOLS.map(function(c){
         var v=d[c.k]||'';
         if(c.k==='updated_at')v=fmtDate(v);
         if(c.k==='date_relance')v=fmtDay(v);
         if(c.k==='date_rencontre')v=fmtRdv(v);
         if(c.k==='statut'&&!v)v='À contacter';
         v=esc(v);
-        if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>';
+        if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>'+(d.exclu_client?' <span class="badge x">Exclue</span>':'');
         if(c.k==='classe'&&v)v='<span class="pill '+v+'">'+v+'</span>';
         return '<td>'+v+'</td>';
       }).join('')+'</tr>';
     }).join('');
     document.getElementById('jEmpty').style.display=rows.length?'none':'block';
     document.getElementById('jCount').textContent=rows.length+' entreprise(s) affichée(s)';
+    renderPVal();
+  }
+  // Validation de la liste par le client (faite une seule fois, côté page client)
+  function renderPVal(){
+    var box=document.getElementById('pVal');
+    if(!JVAL){ box.innerHTML=JROWS.length?'<div class="valbox todo">⏳ Liste en attente de validation par le client — attendre sa validation avant de démarrer les approches.</div>':''; return; }
+    var d=new Date(JVAL.valide_le), mq=JVAL.manquantes||[];
+    box.innerHTML='<div class="valbox done"><b class="t">✓ Liste validée par le client le '+d.toLocaleDateString('fr-CH')+' à '+d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit'})+
+      (JVAL.valide_par_email?' ('+esc(JVAL.valide_par_email)+')':'')+'</b>'+
+      (JVAL.nb_entreprises-JVAL.nb_exclues)+' entreprise(s) retenue(s) · '+JVAL.nb_exclues+' exclue(s) · '+mq.length+' entreprise(s) manquante(s) signalée(s)'+
+      (mq.length?'<ul>'+mq.map(function(m,i){return '<li><div><strong>'+esc(m.nom)+'</strong>'+(m.ville?' · '+esc(m.ville):'')+(m.commentaire?' <span>— '+esc(m.commentaire)+'</span>':'')+'</div><button class="btn" onclick="ficheFromMiss('+i+')">+ Créer la fiche</button></li>';}).join('')+'</ul>':'')+
+      '</div>';
+  }
+  function ficheFromMiss(i){
+    var m=(JVAL.manquantes||[])[i]; if(!m)return;
+    openFiche(null);
+    var f=document.getElementById('jForm'); f.elements.nom.value=m.nom||'';
+    if(m.ville){ var sel=f.elements.ville; if(![].some.call(sel.options,function(o){return o.value===m.ville;})){var o=document.createElement('option');o.textContent=m.ville;sel.appendChild(o);} sel.value=m.ville; }
+    f.elements.notes.value='Suggérée par le client lors de la validation de la liste.'+(m.commentaire?' '+m.commentaire:'');
   }
 
   // Rencontre : date + heure (colonne timestamptz <-> champ datetime-local en heure locale)
@@ -645,6 +692,7 @@
       el.value=(k==='date_rencontre')?toLocalInput(v):v; }); }
     document.getElementById('rdvField').style.display=(d&&(isRdv(d)||d.date_rencontre))?'':'none';
     document.getElementById('jTitle').textContent=d?(d.nom||'Entreprise'):'Nouvelle entreprise';
+    document.getElementById('jExclWarn').style.display=(d&&d.exclu_client)?'':'none';
     document.getElementById('jDelete').style.display=d?'inline-block':'none';
     document.getElementById('jOverlay').classList.add('on');
     form.elements.nom.focus();
