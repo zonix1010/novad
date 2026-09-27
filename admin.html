@@ -59,6 +59,35 @@
   .vtabs button{font-family:'Inter';font-weight:600;font-size:13.5px;border:none;background:none;color:var(--muted);padding:8px 14px;border-radius:4px;cursor:pointer}
   .vtabs button.on{background:var(--ink);color:var(--paper)}
   .badge.a{background:rgba(197,106,46,.14);color:var(--accent2)}
+  /* mandat Jacot */
+  .jbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .jbar h2{font-size:22px}
+  .jbar p{font-size:13px;color:var(--muted);margin-top:2px}
+  a.btn{text-decoration:none;display:inline-block}
+  #jBody tr{cursor:pointer}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+  .pill.A{background:rgba(31,77,58,.14);color:var(--accent)}
+  .pill.B{background:rgba(197,106,46,.14);color:var(--accent2)}
+  .pill.C{background:var(--paper2);color:var(--muted)}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(20,18,16,.45);z-index:50;overflow-y:auto;padding:30px 16px}
+  .overlay.on{display:block}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:10px;max-width:760px;margin:0 auto;padding:28px}
+  .modal h2{font-size:24px;margin-bottom:14px}
+  .modal fieldset{border:1px solid var(--line);border-radius:8px;padding:6px 16px 16px;margin-bottom:14px}
+  .modal legend{font-family:'Fraunces',serif;font-weight:600;font-size:15px;padding:0 6px;color:var(--accent)}
+  .modal label{display:block;font-size:12.5px;font-weight:600;margin:10px 0 5px}
+  .modal input,.modal select,.modal textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:6px;font-family:'Inter';font-size:14px;background:#fff;color:var(--ink)}
+  .modal input:focus,.modal select:focus,.modal textarea:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+  .modal textarea{min-height:90px;resize:vertical}
+  .row2,.row3{display:grid;gap:0 12px}
+  .row2{grid-template-columns:1fr 1fr}
+  .row3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:600px){.row2,.row3{grid-template-columns:1fr}}
+  .modalfoot{display:flex;gap:10px;align-items:center;margin-top:6px}
+  .btn.danger{color:#b6533a;border-color:#e3c1b4}
+  .btn.danger:hover{background:#b6533a;color:#fff;border-color:#b6533a}
+  .btn.go{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.go:hover{background:#163a2b;color:#fff}
 </style>
 </head>
 <body>
@@ -84,10 +113,11 @@
     <div class="vtabs">
       <button id="vt-leads" class="on" onclick="showView('leads')">Repreneurs</button>
       <button id="vt-dem" onclick="showView('dem')">Entreprises</button>
+      <button id="vt-jacot" onclick="showView('jacot')">Mandat Jacot</button>
     </div>
     <div class="hactions">
       <button class="btn" onclick="refresh()">↻ Rafraîchir</button>
-      <button class="btn solid" onclick="VIEW==='dem'?exportDemCSV():exportCSV()">Exporter CSV</button>
+      <button class="btn solid" onclick="VIEW==='dem'?exportDemCSV():VIEW==='jacot'?exportJacotCSV():exportCSV()">Exporter CSV</button>
       <button class="btn" onclick="logout()">Déconnexion</button>
     </div>
   </header>
@@ -127,6 +157,99 @@
       </table>
       <div class="empty" id="dEmpty" style="display:none">Aucune demande pour ces critères.</div>
     </div>
+  </div>
+
+  <div class="wrap" id="viewJacot" style="display:none">
+    <div class="jbar">
+      <div>
+        <h2>Mandat Jacot — Groupe Haute Chocolaterie</h2>
+        <p>Pipeline confiseries / chocolateries / pâtisseries · Berne, Lausanne, Fribourg</p>
+      </div>
+      <div class="hactions">
+        <a class="btn" href="pipeline-jacot.html" target="_blank" rel="noopener">Vue client ↗</a>
+        <button class="btn go" onclick="openJacot(null)">+ Nouvelle entreprise</button>
+      </div>
+    </div>
+    <div class="stats" id="jStats"></div>
+    <div class="filters">
+      <input id="jSearch" placeholder="Rechercher (entreprise, propriétaire, contact, notes…)" oninput="renderJacot()">
+      <select id="jVille" onchange="renderJacot()"><option value="">Toutes les villes</option><option>Berne</option><option>Lausanne</option><option>Fribourg</option><option>Autre</option></select>
+      <select id="jBranche" onchange="renderJacot()"><option value="">Toutes les branches</option><option>Confiserie</option><option>Chocolaterie</option><option>Pâtisserie</option><option>Boulangerie-pâtisserie</option></select>
+      <select id="jStatut" onchange="renderJacot()"><option value="">Tous statuts</option><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select>
+      <select id="jClasse" onchange="renderJacot()"><option value="">Toutes classes</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select>
+    </div>
+    <div class="count" id="jCount"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr id="jHead"></tr></thead>
+        <tbody id="jBody"></tbody>
+      </table>
+      <div class="empty" id="jEmpty" style="display:none">Aucune entreprise pour ces critères.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE fiche entreprise (mandat Jacot) -->
+<div class="overlay" id="jOverlay">
+  <div class="modal">
+    <h2 id="jTitle">Nouvelle entreprise</h2>
+    <form id="jForm" onsubmit="return false;">
+      <fieldset>
+        <legend>Identification</legend>
+        <div class="row2">
+          <div><label>Nom de l'entreprise</label><input name="nom"></div>
+          <div><label>Propriétaire</label><input name="proprietaire"></div>
+        </div>
+        <div class="row3">
+          <div><label>Ville</label><select name="ville"><option value="">—</option><option>Berne</option><option>Lausanne</option><option>Fribourg</option><option>Autre</option></select></div>
+          <div><label>Branche</label><select name="branche"><option value="">—</option><option>Confiserie</option><option>Chocolaterie</option><option>Pâtisserie</option><option>Boulangerie-pâtisserie</option></select></div>
+          <div><label>Points de vente / tea-room</label><input name="pdv"></div>
+        </div>
+        <label>Contact (email / tél.)</label><input name="contact">
+      </fieldset>
+      <fieldset>
+        <legend>Succession &amp; ouverture</legend>
+        <div class="row3">
+          <div><label>Ouverture à une vente</label><select name="ouverture"><option value="">Inconnu</option><option>Oui</option><option>Non</option></select></div>
+          <div><label>Succession en cours</label><select name="succession"><option value="">Inconnu</option><option>Oui</option><option>Non</option></select></div>
+          <div><label>Horizon de transmission</label><input name="horizon" placeholder="ex : 1–3 ans"></div>
+        </div>
+        <label>Type de transaction envisagé</label><input name="type_transaction">
+      </fieldset>
+      <fieldset>
+        <legend>Finances</legend>
+        <div class="row3">
+          <div><label>CA</label><input name="ca"></div>
+          <div><label>EBITDA / EBIT</label><input name="ebitda"></div>
+          <div><label>Résultat net</label><input name="resultat_net"></div>
+        </div>
+        <div class="row3">
+          <div><label>Fonds propres</label><input name="fonds_propres"></div>
+          <div><label>Dette nette</label><input name="dette_nette"></div>
+          <div><label>Loyers / charges</label><input name="loyers"></div>
+        </div>
+        <label>Investissements nécessaires</label><input name="investissements">
+        <label>Prix / fourchette souhaité(e)</label><input name="prix">
+      </fieldset>
+      <fieldset>
+        <legend>Suivi</legend>
+        <div class="row2">
+          <div><label>Statut</label><select name="statut"><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select></div>
+          <div><label>Classification</label><select name="classe"><option value="">—</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select></div>
+        </div>
+        <div class="row2">
+          <div><label>Prochaine étape</label><input name="prochaine_etape"></div>
+          <div><label>Date de relance</label><input name="date_relance" type="date"></div>
+        </div>
+        <label>Notes</label><textarea name="notes"></textarea>
+      </fieldset>
+      <div class="modalfoot">
+        <button class="btn danger" type="button" id="jDelete" style="display:none" onclick="deleteJacot()">Supprimer</button>
+        <div style="flex:1"></div>
+        <button class="btn" type="button" onclick="closeJacot()">Annuler</button>
+        <button class="btn go" type="button" id="jSave" onclick="saveJacot()">Enregistrer</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -266,11 +389,14 @@
     VIEW=v;
     document.getElementById('viewLeads').style.display=(v==='leads')?'':'none';
     document.getElementById('viewDem').style.display=(v==='dem')?'':'none';
+    document.getElementById('viewJacot').style.display=(v==='jacot')?'':'none';
     document.getElementById('vt-leads').classList.toggle('on',v==='leads');
     document.getElementById('vt-dem').classList.toggle('on',v==='dem');
+    document.getElementById('vt-jacot').classList.toggle('on',v==='jacot');
     if(v==='dem' && !DEMS.length) loadDem();
+    if(v==='jacot' && !JROWS.length) loadJacot();
   }
-  function refresh(){ if(VIEW==='dem') loadDem(); else loadLeads(); }
+  function refresh(){ if(VIEW==='dem') loadDem(); else if(VIEW==='jacot') loadJacot(); else loadLeads(); }
   function loadDem(){
     sb.from('demandes').select('*').order('created_at',{ascending:false}).then(function(r){
       if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
@@ -310,6 +436,122 @@
     var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
     a.download='novad-demandes-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   }
+
+  // ---------- vue Mandat Jacot (table pipeline_entreprises) ----------
+  var MANDAT='jacot', JROWS=[], jCurrent=null, jSortKey='updated_at', jSortAsc=false;
+  var JCOLS=[
+    {k:'updated_at',label:'Mise à jour'},{k:'nom',label:'Entreprise'},{k:'proprietaire',label:'Propriétaire'},
+    {k:'ville',label:'Ville'},{k:'branche',label:'Branche'},{k:'statut',label:'Statut'},{k:'classe',label:'Classe'},
+    {k:'ouverture',label:'Ouverture'},{k:'succession',label:'Succession'},{k:'ca',label:'CA'},{k:'prix',label:'Prix souhaité'},
+    {k:'prochaine_etape',label:'Prochaine étape'},{k:'date_relance',label:'Relance'},{k:'contact',label:'Contact'}
+  ];
+  // tous les champs de la fiche (ordre de l'export CSV)
+  var JFIELDS=['nom','proprietaire','ville','branche','pdv','contact','ouverture','succession','horizon','type_transaction',
+    'ca','ebitda','resultat_net','fonds_propres','dette_nette','loyers','investissements','prix',
+    'statut','classe','prochaine_etape','date_relance','notes'];
+
+  function loadJacot(){
+    sb.from('pipeline_entreprises').select('*').eq('mandat_slug',MANDAT).order('updated_at',{ascending:false}).then(function(r){
+      if(r.error){alert('Erreur de lecture : '+r.error.message);return;}
+      JROWS=r.data||[]; renderJacot();
+    });
+  }
+  function jacotFiltered(){
+    var q=document.getElementById('jSearch').value.toLowerCase();
+    var fv=document.getElementById('jVille').value, fb=document.getElementById('jBranche').value,
+        fs=document.getElementById('jStatut').value, fc=document.getElementById('jClasse').value;
+    var rows=JROWS.filter(function(d){
+      if(fv&&d.ville!==fv)return false;
+      if(fb&&d.branche!==fb)return false;
+      if(fs&&(d.statut||'À contacter')!==fs)return false;
+      if(fc&&d.classe!==fc)return false;
+      if(q){var blob=['nom','proprietaire','contact','prochaine_etape','notes'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
+      return true;
+    });
+    rows.sort(function(a,b){
+      var x=a[jSortKey]||'',y=b[jSortKey]||'';
+      if(x<y)return jSortAsc?-1:1; if(x>y)return jSortAsc?1:-1; return 0;
+    });
+    return rows;
+  }
+  function setJSort(k){ if(jSortKey===k)jSortAsc=!jSortAsc; else{jSortKey=k;jSortAsc=true;} renderJacot(); }
+  function fmtDay(s){ if(!s)return''; var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('fr-CH'); }
+  function renderJacot(){
+    var rows=jacotFiltered();
+    var n=function(f){return JROWS.filter(f).length;};
+    document.getElementById('jStats').innerHTML=stat(JROWS.length,'Entreprises')+
+      stat(n(function(d){return d.classe==='A';}),'A — concrète')+
+      stat(n(function(d){return d.classe==='B';}),'B — potentielle')+
+      stat(n(function(d){return d.classe==='C';}),'C — long terme')+
+      stat(n(function(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}),'Rencontres');
+    document.getElementById('jHead').innerHTML=JCOLS.map(function(c){
+      var ar=(jSortKey===c.k)?(jSortAsc?' ▲':' ▼'):'';
+      return '<th onclick="setJSort(\''+c.k+'\')">'+c.label+ar+'</th>';
+    }).join('');
+    document.getElementById('jBody').innerHTML=rows.map(function(d){
+      return '<tr onclick="openJacot(\''+esc(d.id)+'\')">'+JCOLS.map(function(c){
+        var v=d[c.k]||'';
+        if(c.k==='updated_at')v=fmtDate(v);
+        if(c.k==='date_relance')v=fmtDay(v);
+        if(c.k==='statut'&&!v)v='À contacter';
+        v=esc(v);
+        if(c.k==='nom')v='<strong>'+(v||'—')+'</strong>';
+        if(c.k==='classe'&&v)v='<span class="pill '+v+'">'+v+'</span>';
+        return '<td>'+v+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    document.getElementById('jEmpty').style.display=rows.length?'none':'block';
+    document.getElementById('jCount').textContent=rows.length+' entreprise(s) affichée(s)';
+  }
+
+  function openJacot(id){
+    jCurrent=id;
+    var d=id?JROWS.find(function(x){return String(x.id)===String(id);}):null;
+    var form=document.getElementById('jForm'); form.reset();
+    if(d){ JFIELDS.forEach(function(k){ if(form.elements[k]) form.elements[k].value=d[k]==null?'':d[k]; }); }
+    document.getElementById('jTitle').textContent=d?(d.nom||'Entreprise'):'Nouvelle entreprise';
+    document.getElementById('jDelete').style.display=d?'inline-block':'none';
+    document.getElementById('jOverlay').classList.add('on');
+    form.elements.nom.focus();
+  }
+  function closeJacot(){ document.getElementById('jOverlay').classList.remove('on'); jCurrent=null; }
+  function saveJacot(){
+    var form=document.getElementById('jForm'), data={mandat_slug:MANDAT};
+    JFIELDS.forEach(function(k){ var v=form.elements[k].value.trim(); data[k]=v===''?null:v; }); // null plutôt que '' (colonne date)
+    if(!data.nom){alert("Le nom de l'entreprise est requis.");form.elements.nom.focus();return;}
+    data.updated_at=new Date().toISOString();
+    var btn=document.getElementById('jSave'); btn.disabled=true;
+    var q=jCurrent ? sb.from('pipeline_entreprises').update(data).eq('id',jCurrent).select()
+                   : sb.from('pipeline_entreprises').insert(data).select();
+    q.then(function(r){
+      btn.disabled=false;
+      if(r.error){alert("Échec de l'enregistrement : "+r.error.message);return;}
+      if(!r.data||!r.data.length){alert("Aucune ligne enregistrée — vérifiez que la session admin est active.");return;} // RLS : refus silencieux
+      closeJacot(); loadJacot();
+    });
+  }
+  function deleteJacot(){
+    if(!jCurrent)return;
+    var d=JROWS.find(function(x){return String(x.id)===String(jCurrent);});
+    if(!confirm('Supprimer définitivement « '+((d&&d.nom)||'cette entreprise')+' » du pipeline ?'))return;
+    sb.from('pipeline_entreprises').delete().eq('id',jCurrent).select().then(function(r){
+      if(r.error){alert('Échec de la suppression : '+r.error.message);return;}
+      if(!r.data||!r.data.length){alert("Suppression refusée — vérifiez que la session admin est active.");return;}
+      closeJacot(); loadJacot();
+    });
+  }
+  function exportJacotCSV(){
+    var cols=['updated_at'].concat(JFIELDS);
+    var lines=jacotFiltered().map(function(d){return cols.map(function(k){
+      var v=(k==='updated_at')?fmtDate(d[k]):(d[k]||''); v=String(v);
+      if(/^([=@\t\r]|[+\-][^\d\s])/.test(v))v="'"+v;
+      return '"'+v.replace(/"/g,'""')+'"';}).join(';');});
+    var csv='\ufeff'+cols.join(';')+'\n'+lines.join('\n');
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download='novad-pipeline-jacot-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  }
+  document.getElementById('jOverlay').addEventListener('click',function(e){if(e.target===this)closeJacot();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeJacot();});
 
   document.getElementById('pass').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
 </script>
