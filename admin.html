@@ -59,6 +59,9 @@
   .vtabs button{font-family:'Inter';font-weight:600;font-size:13.5px;border:none;background:none;color:var(--muted);padding:8px 14px;border-radius:4px;cursor:pointer}
   .vtabs button.on{background:var(--ink);color:var(--paper)}
   .badge.a{background:rgba(197,106,46,.14);color:var(--accent2)}
+  .stat.click{cursor:pointer;transition:border-color .15s}
+  .stat.click:hover{border-color:var(--accent)}
+  .stat.click.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
   /* mandats */
   .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
   .mcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;cursor:pointer;transition:all .15s}
@@ -192,7 +195,7 @@
       <input id="jSearch" placeholder="Rechercher (entreprise, propriétaire, contact, notes…)" oninput="renderPipe()">
       <select id="jVille" onchange="renderPipe()"><option value="">Toutes les villes</option></select>
       <select id="jBranche" onchange="renderPipe()"><option value="">Toutes les branches</option></select>
-      <select id="jStatut" onchange="renderPipe()"><option value="">Tous statuts</option><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option></select>
+      <select id="jStatut" onchange="renderPipe()"><option value="">Tous statuts</option><option>À contacter</option><option>Contacté</option><option>En discussion</option><option>Qualifié</option><option>NDA signé</option><option>Rencontre organisée</option><option>Clos — gagné</option><option>Clos — perdu</option><option value="__rdv">Rencontres (toutes)</option></select>
       <select id="jClasse" onchange="renderPipe()"><option value="">Toutes classes</option><option value="A">A — concrète</option><option value="B">B — potentielle</option><option value="C">C — long terme</option></select>
     </div>
     <div class="count" id="jCount"></div>
@@ -564,7 +567,7 @@
     var rows=JROWS.filter(function(d){
       if(fv&&d.ville!==fv)return false;
       if(fb&&d.branche!==fb)return false;
-      if(fs&&(d.statut||'À contacter')!==fs)return false;
+      if(fs==='__rdv'){if(!isRdv(d))return false;} else if(fs&&(d.statut||'À contacter')!==fs)return false;
       if(fc&&d.classe!==fc)return false;
       if(q){var blob=['nom','proprietaire','contact','prochaine_etape','notes'].map(function(k){return d[k]||'';}).join(' ').toLowerCase();if(blob.indexOf(q)===-1)return false;}
       return true;
@@ -577,14 +580,26 @@
   }
   function setJSort(k){ if(jSortKey===k)jSortAsc=!jSortAsc; else{jSortKey=k;jSortAsc=true;} renderPipe(); }
   function fmtDay(s){ if(!s)return''; var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('fr-CH'); }
+  function isRdv(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}
+  function statFilter(k){
+    var fc=document.getElementById('jClasse'), fs=document.getElementById('jStatut');
+    if(k==='all'){fc.value='';fs.value='';}
+    else if(k==='rdv'){fs.value=(fs.value==='__rdv')?'':'__rdv';}
+    else{fc.value=(fc.value===k)?'':k;}
+    renderPipe();
+  }
   function renderPipe(){
     var rows=pipeFiltered();
     var n=function(f){return JROWS.filter(f).length;};
-    document.getElementById('jStats').innerHTML=stat(JROWS.length,'Entreprises')+
-      stat(n(function(d){return d.classe==='A';}),'A — concrète')+
-      stat(n(function(d){return d.classe==='B';}),'B — potentielle')+
-      stat(n(function(d){return d.classe==='C';}),'C — long terme')+
-      stat(n(function(d){return d.statut==='Rencontre organisée'||d.statut==='Clos — gagné';}),'Rencontres');
+    var fc=document.getElementById('jClasse').value, fs=document.getElementById('jStatut').value;
+    // cartes cliquables : filtrent le tableau comme les listes déroulantes
+    document.getElementById('jStats').innerHTML=[
+      {k:'all',l:'Entreprises',v:JROWS.length,on:!fc&&!fs},
+      {k:'A',l:'A — concrète',v:n(function(d){return d.classe==='A';}),on:fc==='A'},
+      {k:'B',l:'B — potentielle',v:n(function(d){return d.classe==='B';}),on:fc==='B'},
+      {k:'C',l:'C — long terme',v:n(function(d){return d.classe==='C';}),on:fc==='C'},
+      {k:'rdv',l:'Rencontres',v:n(isRdv),on:fs==='__rdv'}
+    ].map(function(c){return '<div class="stat click'+(c.on?' on':'')+'" onclick="statFilter(\''+c.k+'\')"><b>'+c.v+'</b><span>'+c.l+'</span></div>';}).join('');
     document.getElementById('jHead').innerHTML=JCOLS.map(function(c){
       var ar=(jSortKey===c.k)?(jSortAsc?' ▲':' ▼'):'';
       return '<th onclick="setJSort(\''+c.k+'\')">'+c.label+ar+'</th>';
